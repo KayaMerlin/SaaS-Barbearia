@@ -38,15 +38,9 @@ class ClienteService {
         if (!cliente) {
             throw new Error("Cliente não encontrado.");
         }
-        const agendamentos = await prisma.agendamento.findMany({
-            where: { clienteId: id }
+        await prisma.cliente.delete({
+            where: { id, tenantId }
         });
-        const agendamentoIds = agendamentos.map((a) => a.id);
-        await prisma.transacao.deleteMany({
-            where: { agendamentoId: { in: agendamentoIds } }
-        });
-        await prisma.agendamento.deleteMany({ where: { clienteId: id } });
-        await prisma.cliente.delete({ where: { id } });
     }
 }
 

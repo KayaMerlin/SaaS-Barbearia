@@ -8,7 +8,7 @@ class ConfiguracaoController {
                 return res.status(401).json({ erro: 'Token inválido ou sem tenant.' });
             }
 
-            const { logoUrl, nomeBarbearia, horarioAbertura, horarioFechamento } = req.body;
+            const { logoUrl, nomeBarbearia, horarioAbertura, horarioFechamento, mercadoPagoAccessToken } = req.body;
             const data = {};
             if (logoUrl !== undefined) data.logoUrl = logoUrl || null;
             if (nomeBarbearia !== undefined) {
@@ -22,9 +22,10 @@ class ConfiguracaoController {
             }
             if (horarioAbertura !== undefined) data.horarioAbertura = horarioAbertura || '09:00';
             if (horarioFechamento !== undefined) data.horarioFechamento = horarioFechamento || '18:00';
+            if (mercadoPagoAccessToken !== undefined) data.mercadoPagoAccessToken = mercadoPagoAccessToken ? String(mercadoPagoAccessToken).trim() : null;
 
             if (Object.keys(data).length === 0) {
-                return res.status(400).json({ erro: 'Envie ao menos um campo para atualizar (logoUrl, nomeBarbearia, horarioAbertura ou horarioFechamento).' });
+                return res.status(400).json({ erro: 'Envie ao menos um campo para atualizar (logoUrl, nomeBarbearia, horarioAbertura, horarioFechamento ou mercadoPagoAccessToken).' });
             }
 
             const tenantAtualizado = await prisma.tenant.update({
@@ -56,7 +57,11 @@ class ConfiguracaoController {
                 return res.status(404).json({ erro: 'Barbearia não encontrada.' });
             }
 
-            return res.json(tenant);
+            const { mercadoPagoAccessToken, ...resto } = tenant;
+            return res.json({
+                ...resto,
+                hasMercadoPago: Boolean(mercadoPagoAccessToken?.trim())
+            });
         } catch (error) {
             return res.status(500).json({ erro: 'Erro ao buscar configurações.' });
         }

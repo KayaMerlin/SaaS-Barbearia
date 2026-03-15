@@ -20,6 +20,8 @@ export default function ConfiguracoesPage() {
   } | null>(null);
   const [linkCopiado, setLinkCopiado] = useState(false);
   const [slug, setSlug] = useState<string | null>(null);
+  const [hasMercadoPago, setHasMercadoPago] = useState(false);
+  const [mercadoPagoAccessToken, setMercadoPagoAccessToken] = useState("");
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -30,6 +32,7 @@ export default function ConfiguracoesPage() {
         setSlug(resposta.data.slug ?? null);
         if (resposta.data.horarioAbertura) setHorarioAbertura(resposta.data.horarioAbertura);
         if (resposta.data.horarioFechamento) setHorarioFechamento(resposta.data.horarioFechamento);
+        setHasMercadoPago(Boolean(resposta.data.hasMercadoPago));
       } catch (error) {
         console.error("Erro ao carregar dados", error);
         setMensagem({ tipo: "erro", texto: "Falha ao carregar configurações." });
@@ -93,7 +96,10 @@ export default function ConfiguracoesPage() {
         nomeBarbearia: nomeTrim || undefined,
         horarioAbertura,
         horarioFechamento,
+        mercadoPagoAccessToken: mercadoPagoAccessToken.trim() || undefined,
       });
+      if (mercadoPagoAccessToken.trim()) setHasMercadoPago(true);
+      setMercadoPagoAccessToken("");
       setUsuario({
         nome: (nomeBarbearia || usuario?.nome) ?? "Barbearia",
         logoUrl: logoUrl ?? null,
@@ -199,6 +205,37 @@ export default function ConfiguracoesPage() {
                 className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium text-base shadow-inner bg-slate-50"
               />
             </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm md:p-10">
+          <h3 className="text-xl font-bold text-slate-950 mb-2">
+            PIX com Mercado Pago
+          </h3>
+          <p className="text-sm text-slate-500 mb-6 max-w-lg">
+            Conecte sua conta Mercado Pago para receber o pagamento do sinal/corte direto no seu app. Os clientes verão o QR Code PIX real ao agendar. O token não é exibido por segurança.
+          </p>
+          {hasMercadoPago && (
+            <p className="text-sm text-green-600 font-medium mb-4">
+              Mercado Pago conectado. Para alterar, insira um novo token abaixo e salve.
+            </p>
+          )}
+          <div className="max-w-xl">
+            <label
+              htmlFor="mercadoPagoToken"
+              className="block text-sm font-bold text-slate-700 mb-2"
+            >
+              Access Token do Mercado Pago
+            </label>
+            <input
+              id="mercadoPagoToken"
+              type="password"
+              value={mercadoPagoAccessToken}
+              onChange={(e) => setMercadoPagoAccessToken(e.target.value)}
+              placeholder={hasMercadoPago ? "Deixe em branco para manter o atual" : "Cole seu token de produção ou teste (Credenciais no painel MP)"}
+              className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium text-base shadow-inner bg-slate-50"
+              autoComplete="off"
+            />
           </div>
         </div>
 

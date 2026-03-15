@@ -12,7 +12,7 @@ const BASE_URL = typeof window !== "undefined" ? api.defaults.baseURL ?? "https:
 
 type TenantPublico = { nome: string; logoUrl: string | null };
 type Servico = { id: string; nome: string; preco: string; duracao?: number };
-type DadosPix = { codigo: string; valor: number; transacaoId: string };
+type DadosPix = { codigo: string; valor: number; transacaoId: string; qrCodeBase64?: string | null };
 
 export default function AgendamentoPublico() {
   const params = useParams();
@@ -106,6 +106,7 @@ export default function AgendamentoPublico() {
           codigo: dados.codigoPix ?? "",
           valor: Number(dados.valor) || 0,
           transacaoId: dados.transacaoId ?? "",
+          qrCodeBase64: dados.qrCodeBase64 ?? null,
         });
         setPasso(4);
       } else {
@@ -206,6 +207,7 @@ export default function AgendamentoPublico() {
               transacaoId={dadosPix.transacaoId}
               baseUrl={BASE_URL}
               onVoltar={() => window.location.reload()}
+              qrCodeBase64={dadosPix.qrCodeBase64}
             />
           )}
         </div>

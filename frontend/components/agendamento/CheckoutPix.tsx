@@ -8,6 +8,7 @@ interface CheckoutPixProps {
   transacaoId: string;
   baseUrl: string;
   onVoltar: () => void;
+  qrCodeBase64?: string | null;
 }
 
 export default function CheckoutPix({
@@ -16,6 +17,7 @@ export default function CheckoutPix({
   transacaoId,
   baseUrl,
   onVoltar,
+  qrCodeBase64,
 }: CheckoutPixProps) {
   const [copiado, setCopiado] = useState(false);
   const [tempoRestante, setTempoRestante] = useState(600);
@@ -95,6 +97,16 @@ export default function CheckoutPix({
             currency: "BRL",
           }).format(valor)}
         </p>
+
+        {qrCodeBase64 && (
+          <div className="flex justify-center mb-4">
+            <img
+              src={`data:image/png;base64,${qrCodeBase64}`}
+              alt="QR Code PIX"
+              className="w-48 h-48 rounded-xl border border-slate-200 p-2 bg-white"
+            />
+          </div>
+        )}
 
         <div className="bg-white p-3 rounded-xl border border-slate-200 mb-4">
           <span className="text-xs text-slate-400 font-mono truncate select-all block">

@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const prisma = require('../config/db');
 const { getHorariosDisponiveis } = require('../services/HorariosService');
+const { criarPagamentoPix } = require('../services/MercadoPagoService');
 
 class PublicController {
 
@@ -46,7 +47,8 @@ class PublicController {
 
     async criarAgendamento(req, res) {
         try {
-            const tenantId = await this._getTenantBySlug(req.params.slug);
+            const tenant = await this._getTenantCompletoBySlug(req.params.slug);
+            const tenantId = tenant.id;
             const { servicoId, dataHora, nome, telefone } = req.body;
 
             if (!servicoId || !dataHora || !nome || !telefone) {
@@ -111,14 +113,43 @@ class PublicController {
                     }
                 });
 
-                return { agendamento, transacao };
+                return { agendamento, transacao, servico };
             });
+
+            let codigoPixFinal = resultado.transacao.codigoPix;
+            let qrCodeBase64 = null;
+
+            const tokenMP = tenant.mercadoPagoAccessToken?.trim() || process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
+            if (tokenMP) {
+                try {
+                    const valorNum = Number(resultado.transacao.valor);
+                    const pix = await criarPagamentoPix(tokenMP, {
+                        valor: valorNum,
+                        descricao: `Reserva - ${resultado.servico.nome}`,
+                        emailPagador: `cliente_${telefone.replace(/\D/g, '')}@barbersaas.com`,
+                        externalReference: resultado.transacao.id,
+                        nomeCliente: nome
+                    });
+                    codigoPixFinal = pix.codigoPix || codigoPixFinal;
+                    qrCodeBase64 = pix.qrCodeBase64 || null;
+                    await prisma.transacao.update({
+                        where: { id: resultado.transacao.id },
+                        data: {
+                            codigoPix: codigoPixFinal,
+                            mercadoPagoPaymentId: pix.paymentId
+                        }
+                    });
+                } catch (err) {
+                    console.error('Mercado Pago PIX falhou, usando PIX simulado:', err.message);
+                }
+            }
 
             res.status(201).json({
                 mensagem: "Agendamento reservado! Realize o pagamento.",
                 transacaoId: resultado.transacao.id,
                 valor: resultado.transacao.valor,
-                codigoPix: resultado.transacao.codigoPix
+                codigoPix: codigoPixFinal,
+                qrCodeBase64: qrCodeBase64 || undefined
             });
         } catch (error) {
             if (error.code === 'P2002') {
