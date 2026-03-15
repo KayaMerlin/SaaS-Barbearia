@@ -151,10 +151,12 @@ class PublicController {
                 return res.status(400).json({ erro: 'Data inválida.' });
             }
 
-            const hoje = new Date();
-            hoje.setUTCHours(0, 0, 0, 0);
-            const diaEscolhido = new Date(data + 'T00:00:00.000Z');
-            if (diaEscolhido < hoje) {
+            const BR_UTC_OFFSET_MS = 3 * 60 * 60 * 1000;
+            const nowBrazil = new Date(Date.now() + BR_UTC_OFFSET_MS);
+            const hojeBrazil = nowBrazil.getUTCFullYear() + '-' +
+                String(nowBrazil.getUTCMonth() + 1).padStart(2, '0') + '-' +
+                String(nowBrazil.getUTCDate()).padStart(2, '0');
+            if (data < hojeBrazil) {
                 return res.status(400).json({ erro: 'Não é possível agendar em data passada.' });
             }
 
@@ -167,9 +169,8 @@ class PublicController {
                 return res.status(404).json({ erro: 'Serviço não encontrado.' });
             }
 
-            const startOfDay = new Date(data + 'T00:00:00.000Z');
-            const startOfNextDay = new Date(startOfDay);
-            startOfNextDay.setUTCDate(startOfNextDay.getUTCDate() + 1);
+            const startOfDay = new Date(data + 'T03:00:00.000Z');
+            const startOfNextDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
 
             const agendamentosDoDia = await prisma.agendamento.findMany({
                 where: {

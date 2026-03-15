@@ -14,8 +14,17 @@ function minutesToTimeString(minutes) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+const BR_UTC_OFFSET_HOURS = 3;
+
 function dateToMinutes(date) {
   return date.getUTCHours() * 60 + date.getUTCMinutes();
+}
+
+function dateToMinutesBrazil(date) {
+  const utcMs = date.getTime();
+  const brazilMs = utcMs + BR_UTC_OFFSET_HOURS * 60 * 60 * 1000;
+  const d = new Date(brazilMs);
+  return (d.getUTCHours() * 60 + d.getUTCMinutes()) % (24 * 60);
 }
 
 function intervalosSeSobrepoem(start1, end1, start2, end2) {
@@ -37,7 +46,7 @@ function getHorariosDisponiveis({ tenant, servico, agendamentosDoDia }) {
   }
 
   const ocupados = agendamentosDoDia.map((ag) => {
-    const start = dateToMinutes(ag.dataHora);
+    const start = dateToMinutesBrazil(ag.dataHora);
     const duracaoAg = Number(ag.servico?.duracao ?? 0);
     return { start, end: start + duracaoAg };
   });
