@@ -42,7 +42,7 @@ O BarberSaaS é uma plataforma SaaS de agendamento e gestão voltada para barbea
 - **Cadastro e login:** Criação de barbearia (tenant) com usuário e login com JWT.
 - **Painel administrativo:** Dashboard com resumo do dia, agendamentos, serviços, clientes, financeiro e configurações.
 - **Configurações da barbearia:** Nome, logo (Base64), horário de abertura e fechamento; link público de agendamento para enviar aos clientes (copiar para área de transferência).
-- **Página pública de agendamento:** URL única por barbearia (`/agendar/{slug}`). Cliente escolhe serviço, data, horário (motor de horários baseado em abertura/fechamento e agendamentos existentes), informa nome e telefone e gera PIX simulado para pagamento.
+- **Página pública de agendamento:** URL única por barbearia (`/agendar/{slug}`). O slug é gerado no cadastro como `nome-normalizado` + 8 caracteres do ID do tenant, garantindo unicidade mesmo com barbearias de mesmo nome. Cliente escolhe serviço, data, horário (motor de horários baseado em abertura/fechamento e agendamentos existentes), informa nome e telefone e gera PIX simulado para pagamento.
 - **Financeiro (B2C):** Listagem de transações e simulação de confirmação de PIX via webhook.
 - **Assinatura B2B (paywall):** Status e vencimento no tenant; geração de PIX de assinatura; middleware que bloqueia acesso a rotas protegidas quando a assinatura está inativa; webhook para simular confirmação de pagamento da assinatura.
 - **Auditoria no banco:** Trigger em PL/pgSQL que registra alterações na tabela de transações em uma tabela de log de auditoria.

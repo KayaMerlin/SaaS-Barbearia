@@ -1,6 +1,16 @@
 const prisma = require('../config/db');
 const bcrypt = require('bcryptjs');
 
+function slugify(text) {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .slice(0, 50) || 'barbearia';
+}
+
 class BarbeariaService {
     async criarBarbearia(nomeBarbearia, nomeUsuario, email, senha) {
         const senhaHash = await bcrypt.hash(senha, 10);
@@ -23,7 +33,16 @@ class BarbeariaService {
             }
         });
 
-        return novaBarbearia;
+        const slugBase = slugify(nomeBarbearia);
+        const sufixo = novaBarbearia.id.replace(/-/g, '').substring(0, 8);
+        const slug = `${slugBase}-${sufixo}`;
+
+        await prisma.tenant.update({
+            where: { id: novaBarbearia.id },
+            data: { slug }
+        });
+
+        return { ...novaBarbearia, slug };
     }
 }
 

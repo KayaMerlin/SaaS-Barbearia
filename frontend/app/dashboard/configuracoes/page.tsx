@@ -19,6 +19,7 @@ export default function ConfiguracoesPage() {
     texto: string;
   } | null>(null);
   const [linkCopiado, setLinkCopiado] = useState(false);
+  const [slug, setSlug] = useState<string | null>(null);
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -26,6 +27,7 @@ export default function ConfiguracoesPage() {
         const resposta = await api.get("/configuracoes");
         setLogoUrl(resposta.data.logoUrl ?? null);
         setNomeBarbearia(resposta.data.nome ?? "");
+        setSlug(resposta.data.slug ?? null);
         if (resposta.data.horarioAbertura) setHorarioAbertura(resposta.data.horarioAbertura);
         if (resposta.data.horarioFechamento) setHorarioFechamento(resposta.data.horarioFechamento);
       } catch (error) {
@@ -52,10 +54,11 @@ export default function ConfiguracoesPage() {
     setMensagem({ tipo: "erro", texto: message });
   };
 
-  const slugAgendamento =
+  const slugFallback =
     nomeBarbearia.trim().length > 0
       ? nomeBarbearia.toLowerCase().replace(/\s+/g, "-")
       : "";
+  const slugAgendamento = slug ?? slugFallback;
   const linkParaClientes =
     typeof window !== "undefined" && slugAgendamento
       ? `${window.location.origin}/agendar/${slugAgendamento}`
@@ -217,7 +220,7 @@ export default function ConfiguracoesPage() {
             </div>
           ) : (
             <p className="text-slate-500 text-sm">
-              Salve o nome da barbearia acima para gerar o link de agendamento.
+              O link de agendamento aparece aqui após salvar as configurações. Barbearias novas recebem um link único (nome + ID).
             </p>
           )}
         </div>

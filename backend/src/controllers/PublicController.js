@@ -5,33 +5,29 @@ const { getHorariosDisponiveis } = require('../services/HorariosService');
 class PublicController {
 
     async _getTenantBySlug(slug) {
-        const tenants = await prisma.tenant.findMany();
-
-        const tenantEncontrado = tenants.find((t) => {
-            const nomeFormatado = t.nome.toLowerCase().replace(/\s+/g, '-');
-            return nomeFormatado === slug.toLowerCase();
+        let tenant = await prisma.tenant.findUnique({
+            where: { slug }
         });
+        if (tenant) return tenant.id;
 
-        if (!tenantEncontrado) {
-            throw new Error("Barbearia não encontrada. Verifique o link.");
-        }
-
-        return tenantEncontrado.id;
+        const tenants = await prisma.tenant.findMany();
+        const nomeFormatado = slug.toLowerCase();
+        const encontrado = tenants.find((t) => t.nome.toLowerCase().replace(/\s+/g, '-') === nomeFormatado);
+        if (!encontrado) throw new Error("Barbearia não encontrada. Verifique o link.");
+        return encontrado.id;
     }
 
     async _getTenantCompletoBySlug(slug) {
-        const tenants = await prisma.tenant.findMany();
-
-        const tenantEncontrado = tenants.find((t) => {
-            const nomeFormatado = t.nome.toLowerCase().replace(/\s+/g, '-');
-            return nomeFormatado === slug.toLowerCase();
+        let tenant = await prisma.tenant.findUnique({
+            where: { slug }
         });
+        if (tenant) return tenant;
 
-        if (!tenantEncontrado) {
-            throw new Error("Barbearia não encontrada. Verifique o link.");
-        }
-
-        return tenantEncontrado;
+        const tenants = await prisma.tenant.findMany();
+        const nomeFormatado = slug.toLowerCase();
+        const encontrado = tenants.find((t) => t.nome.toLowerCase().replace(/\s+/g, '-') === nomeFormatado);
+        if (!encontrado) throw new Error("Barbearia não encontrada. Verifique o link.");
+        return encontrado;
     }
 
     async listarServicos(req, res) {

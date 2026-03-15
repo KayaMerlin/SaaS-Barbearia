@@ -1,11 +1,11 @@
 const prisma = require('../config/db');
 
-function getTenantBySlug(tenants, slug) {
-    const tenantEncontrado = tenants.find((t) => {
+function getTenantByNomeSlug(tenants, slug) {
+    const slugNorm = slug.toLowerCase();
+    return tenants.find((t) => {
         const nomeFormatado = t.nome.toLowerCase().replace(/\s+/g, '-');
-        return nomeFormatado === slug.toLowerCase();
+        return nomeFormatado === slugNorm;
     });
-    return tenantEncontrado;
 }
 
 class PublicTenantController {
@@ -17,11 +17,17 @@ class PublicTenantController {
                 return res.status(400).json({ erro: 'Slug da barbearia é obrigatório.' });
             }
 
-            const tenants = await prisma.tenant.findMany({
+            let tenant = await prisma.tenant.findUnique({
+                where: { slug },
                 select: { id: true, nome: true, logoUrl: true, ativo: true }
             });
 
-            const tenant = getTenantBySlug(tenants, slug);
+            if (!tenant) {
+                const tenants = await prisma.tenant.findMany({
+                    select: { id: true, nome: true, logoUrl: true, ativo: true }
+                });
+                tenant = getTenantByNomeSlug(tenants, slug);
+            }
 
             if (!tenant || !tenant.ativo) {
                 return res.status(404).json({ erro: 'Barbearia não encontrada ou inativa.' });
