@@ -24,6 +24,7 @@ O BarberSaaS é uma plataforma SaaS de agendamento e gestão voltada para barbea
 - **Prisma 7** (ORM e migrações; configuração via `prisma.config.ts` para URL do banco)
 - **PostgreSQL** (banco de dados)
 - **JSON Web Token (JWT)** para autenticação e proteção de rotas
+- **bcryptjs** (hash de senhas no cadastro; comparação no login)
 - **Zod** (validação de payloads)
 - **Multer** (configurado; upload de logo em produção foi substituído por Base64 por limitação serverless)
 - **dotenv** e **pg** / **@prisma/adapter-pg** para conexão ao banco
@@ -174,10 +175,15 @@ O frontend consome a API pela URL do backend na Vercel. A `baseURL` em `frontend
 
 ---
 
+## Segurança de senhas
+
+No cadastro, a senha é hasheada com **bcryptjs** (custo 10) antes de ser gravada no banco. No login, é usado `bcrypt.compare` para validar. Usuários criados antes dessa implementação podem continuar entrando com senha em texto puro até que o registro seja atualizado (por exemplo, ao trocar a senha).
+
+---
+
 ## Próximos Passos Sugeridos
 
 - Integração com gateway de pagamento real (Mercado Pago, Stripe ou similar) para PIX e assinatura.
-- Hash de senha (por exemplo, bcrypt) antes de persistir no banco.
 - Notificações (e-mail ou WhatsApp) para confirmação de agendamentos.
 - Múltiplos profissionais por barbearia (agenda por profissional).
 

@@ -1,7 +1,10 @@
 const prisma = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 class BarbeariaService {
     async criarBarbearia(nomeBarbearia, nomeUsuario, email, senha) {
+        const senhaHash = await bcrypt.hash(senha, 10);
+
         const novaBarbearia = await prisma.tenant.create({
             data: {
                 nome: nomeBarbearia,
@@ -11,7 +14,7 @@ class BarbeariaService {
                     create: {
                         nome: nomeUsuario,
                         email: email,
-                        senha: senha
+                        senha: senhaHash
                     }
                 }
             },

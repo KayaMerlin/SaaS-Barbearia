@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 class AuthService {
     async executarLogin(email, senha) {
@@ -7,7 +8,15 @@ class AuthService {
             where: { email: email }
         });
 
-        if (!usuario || usuario.senha !== senha) {
+        if (!usuario) {
+            throw new Error("Email ou senha inválidos");
+        }
+
+        const senhaValida = usuario.senha.startsWith('$2')
+            ? await bcrypt.compare(senha, usuario.senha)
+            : senha === usuario.senha;
+
+        if (!senhaValida) {
             throw new Error("Email ou senha inválidos");
         }
 
