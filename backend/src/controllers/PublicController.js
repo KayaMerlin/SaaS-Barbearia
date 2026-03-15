@@ -121,6 +121,11 @@ class PublicController {
                 codigoPix: resultado.transacao.codigoPix
             });
         } catch (error) {
+            if (error.code === 'P2002') {
+                return res.status(409).json({
+                    erro: "Que pena! Outro cliente acabou de reservar este horário. Por favor, escolha outro."
+                });
+            }
             res.status(400).json({ erro: error.message });
         }
     }

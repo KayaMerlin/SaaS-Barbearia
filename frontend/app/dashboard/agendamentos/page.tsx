@@ -7,16 +7,50 @@ type Agendamento = {
   id: string;
   dataHora: string;
   status: string;
-  servico: { nome: string; preco: string };
+  servico: { nome: string; preco: string; duracao?: number };
   cliente: { nome: string; telefone: string };
 };
+
+function formatarDataBR(isoDate: string) {
+  const d = new Date(isoDate + "T12:00:00");
+  return d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" });
+}
+
+function labelStatus(status: string) {
+  const map: Record<string, string> = {
+    AGUARDANDO_PAGAMENTO: "Aguard. pagamento",
+    CONFIRMADO: "Confirmado",
+    CONCLUIDO: "Concluído",
+    CANCELADO: "Cancelado",
+    PENDENTE: "Pendente",
+  };
+  return map[status] ?? status;
+}
+
+function classeBadge(status: string) {
+  switch (status) {
+    case "CONFIRMADO":
+      return "bg-green-100 text-green-800";
+    case "CONCLUIDO":
+      return "bg-blue-100 text-blue-800";
+    case "AGUARDANDO_PAGAMENTO":
+    case "PENDENTE":
+      return "bg-amber-100 text-amber-800";
+    case "CANCELADO":
+      return "bg-slate-100 text-slate-600";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+}
 
 export default function AgendamentosPage() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [dataSelecionada, setDataSelecionada] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [dataSelecionada, setDataSelecionada] = useState(() => {
+    const d = new Date();
+    return d.toISOString().split("T")[0];
+  });
+  const [atualizandoId, setAtualizandoId] = useState<string | null>(null);
 
   const carregarAgenda = async () => {
     setCarregando(true);
@@ -24,9 +58,10 @@ export default function AgendamentosPage() {
       const resposta = await api.get<Agendamento[]>("/agendamentos", {
         params: { data: dataSelecionada },
       });
-      setAgendamentos(resposta.data);
+      setAgendamentos(resposta.data ?? []);
     } catch (error) {
       console.error("Erro ao buscar agendamentos:", error);
+      setAgendamentos([]);
     } finally {
       setCarregando(false);
     }
@@ -37,167 +72,171 @@ export default function AgendamentosPage() {
   }, [dataSelecionada]);
 
   const atualizarStatus = async (id: string, novoStatus: string) => {
+    setAtualizandoId(id);
     try {
       await api.patch(`/agendamentos/${id}/status`, { status: novoStatus });
-      carregarAgenda();
+      await carregarAgenda();
     } catch (error) {
       console.error("Erro ao atualizar:", error);
+    } finally {
+      setAtualizandoId(null);
     }
   };
 
+  const hoje = new Date().toISOString().split("T")[0];
+  const amanha = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+  const setHoje = () => setDataSelecionada(hoje);
+  const setAmanha = () => setDataSelecionada(amanha);
+
   return (
     <div className="flex flex-col h-full font-sans">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-            Agendamentos
-          </h2>
-          <p className="text-slate-500 text-sm mt-1">
-            Gerir os horários marcados para qualquer dia
-          </p>
-        </div>
+      <div className="mb-6">
+        <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+          Agendamentos
+        </h2>
+        <p className="text-slate-500 text-sm mt-1">
+          Quem você atende hoje? Altere o status com um toque.
+        </p>
+      </div>
 
-        <div className="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-200 shadow-sm w-fit">
-          <span className="text-slate-500 font-medium pl-2">Data:</span>
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        <button
+          type="button"
+          onClick={setHoje}
+          className={`px-4 py-2.5 rounded-xl text-sm font-bold transition ${
+            dataSelecionada === hoje
+              ? "bg-slate-900 text-white shadow-md"
+              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          Hoje
+        </button>
+        <button
+          type="button"
+          onClick={setAmanha}
+          className={`px-4 py-2.5 rounded-xl text-sm font-bold transition ${
+            dataSelecionada === amanha
+              ? "bg-slate-900 text-white shadow-md"
+              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          Amanhã
+        </button>
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
+          <label htmlFor="data-agenda" className="text-slate-500 text-sm font-medium whitespace-nowrap">
+            Escolher:
+          </label>
           <input
+            id="data-agenda"
             type="date"
             value={dataSelecionada}
             onChange={(e) => setDataSelecionada(e.target.value)}
-            className="bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block px-3 py-2 outline-none font-bold cursor-pointer transition"
+            className="bg-transparent border-0 text-slate-800 text-sm font-bold outline-none cursor-pointer min-w-0"
           />
         </div>
+        <span className="text-slate-400 text-sm font-medium ml-1">
+          {formatarDataBR(dataSelecionada)}
+        </span>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col">
         {carregando ? (
-          <div className="p-8 text-center text-slate-500 font-medium">
-            A procurar agendamentos...
+          <div className="flex-1 flex items-center justify-center py-16">
+            <div className="text-slate-500 font-medium">Carregando agendamentos...</div>
           </div>
         ) : agendamentos.length === 0 ? (
-          <div className="p-16 text-center flex-1 flex flex-col justify-center items-center">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+          <div className="flex-1 flex flex-col items-center justify-center py-16 px-4">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-3xl mb-4">
               📅
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">
-              Agenda Livre!
+            <h3 className="text-lg font-bold text-slate-900 mb-2 text-center">
+              Agenda livre
             </h3>
-            <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
-              Não há nenhum agendamento para este dia. Aproveite para partilhar o
-              link da sua barbearia no Instagram.
+            <p className="text-slate-500 text-sm text-center max-w-sm">
+              Nenhum agendamento para este dia. Compartilhe o link da sua barbearia com os clientes.
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50">
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Horário
-                  </th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Cliente
-                  </th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Serviço
-                  </th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {agendamentos.map((agendamento) => {
-                  const horaFormatada = new Date(
-                    agendamento.dataHora
-                  ).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    timeZone: "UTC",
-                  });
+          <div className="space-y-3 overflow-y-auto pb-4">
+            {agendamentos.map((ag) => {
+              const hora = new Date(ag.dataHora).toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "UTC",
+              });
+              const duracao = ag.servico?.duracao ? ` (${ag.servico.duracao} min)` : "";
+              const loading = atualizandoId === ag.id;
+              const podeConfirmar = ag.status === "AGUARDANDO_PAGAMENTO";
+              const podeConcluir = ag.status === "CONFIRMADO";
+              const podeCancelar = ag.status !== "CANCELADO" && ag.status !== "CONCLUIDO";
 
-                  return (
-                    <tr
-                      key={agendamento.id}
-                      className="hover:bg-slate-50 transition group"
+              return (
+                <div
+                  key={ag.id}
+                  className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3"
+                >
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="font-bold text-lg text-slate-900">{hora}</span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${classeBadge(ag.status)}`}
                     >
-                      <td className="p-4">
-                        <span className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-sm font-black shadow-sm">
-                          {horaFormatada}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <p className="font-bold text-slate-900">
-                          {agendamento.cliente.nome}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {agendamento.cliente.telefone}
-                        </p>
-                      </td>
-                      <td className="p-4">
-                        <p className="font-bold text-slate-700">
-                          {agendamento.servico.nome}
-                        </p>
-                        <p className="text-xs text-green-600 font-black">
-                          {new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          }).format(parseFloat(agendamento.servico.preco))}
-                        </p>
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`text-xs font-bold px-3 py-1.5 rounded-lg ${
-                            agendamento.status === "CONFIRMADO"
-                              ? "bg-green-100 text-green-700"
-                              : agendamento.status === "CONCLUIDO"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : agendamento.status === "AGUARDANDO_PAGAMENTO"
-                                  ? "bg-amber-100 text-amber-700"
-                                  : agendamento.status === "PENDENTE"
-                                    ? "bg-yellow-100 text-yellow-700"
-                                    : agendamento.status === "CANCELADO"
-                                      ? "bg-slate-100 text-slate-500"
-                                      : "bg-red-100 text-red-700"
-                          }`}
+                      {labelStatus(ag.status)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-slate-900">{ag.cliente.nome}</h3>
+                    <p className="text-slate-500 text-sm">
+                      {ag.servico.nome}
+                      {duracao}
+                    </p>
+                    <p className="text-slate-400 text-xs mt-0.5">{ag.cliente.telefone}</p>
+                    <p className="text-green-600 text-sm font-bold mt-1">
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(parseFloat(ag.servico.preco))}
+                    </p>
+                  </div>
+
+                  {(podeConfirmar || podeConcluir || podeCancelar) && (
+                    <div className="flex gap-2 mt-1">
+                      {podeConfirmar && (
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => atualizarStatus(ag.id, "CONFIRMADO")}
+                          className="flex-1 bg-green-500 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-green-600 transition disabled:opacity-50"
                         >
-                          {agendamento.status === "AGUARDANDO_PAGAMENTO"
-                            ? "Aguard. pagamento"
-                            : agendamento.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right">
-                        {(agendamento.status === "PENDENTE" ||
-                          agendamento.status === "CONFIRMADO") && (
-                          <div className="flex gap-2 justify-end">
-                            <button
-                              onClick={() =>
-                                atualizarStatus(agendamento.id, "CONCLUIDO")
-                              }
-                              className="bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition"
-                              title="Marcar como Concluído"
-                            >
-                              ✓
-                            </button>
-                            <button
-                              onClick={() =>
-                                atualizarStatus(agendamento.id, "CANCELADO")
-                              }
-                              className="bg-red-50 border border-red-200 text-red-600 p-2 rounded-lg hover:bg-red-100 transition"
-                              title="Cancelar Agendamento"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          {loading ? "..." : "Confirmar"}
+                        </button>
+                      )}
+                      {podeConcluir && (
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => atualizarStatus(ag.id, "CONCLUIDO")}
+                          className="flex-1 bg-blue-500 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-blue-600 transition disabled:opacity-50"
+                        >
+                          {loading ? "..." : "Concluído"}
+                        </button>
+                      )}
+                      {podeCancelar && (
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => atualizarStatus(ag.id, "CANCELADO")}
+                          className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-200 transition disabled:opacity-50"
+                        >
+                          {loading ? "..." : "Cancelar"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

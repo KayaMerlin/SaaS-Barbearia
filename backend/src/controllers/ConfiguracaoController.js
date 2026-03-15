@@ -11,7 +11,15 @@ class ConfiguracaoController {
             const { logoUrl, nomeBarbearia, horarioAbertura, horarioFechamento } = req.body;
             const data = {};
             if (logoUrl !== undefined) data.logoUrl = logoUrl || null;
-            if (nomeBarbearia !== undefined) data.nome = nomeBarbearia;
+            if (nomeBarbearia !== undefined) {
+                const nomeTrim = typeof nomeBarbearia === 'string' ? nomeBarbearia.trim() : '';
+                if (nomeTrim.length < 3) {
+                    return res.status(400).json({
+                        erro: 'Nome da barbearia precisa ter no mínimo 3 caracteres.'
+                    });
+                }
+                data.nome = nomeTrim;
+            }
             if (horarioAbertura !== undefined) data.horarioAbertura = horarioAbertura || '09:00';
             if (horarioFechamento !== undefined) data.horarioFechamento = horarioFechamento || '18:00';
 

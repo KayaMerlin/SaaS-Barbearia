@@ -65,6 +65,8 @@ model Agendamento {
   servicoId  String
   servico    Servico  @relation(fields: [servicoId], references: [id])
   transacao  Transacao?
+
+  @@unique([tenantId, dataHora])
 }
 
 model Transacao {

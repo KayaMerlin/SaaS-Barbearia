@@ -76,12 +76,21 @@ export default function ConfiguracoesPage() {
   };
 
   const handleSalvarTudo = async () => {
+    const nomeTrim = nomeBarbearia.trim();
+    if (nomeTrim.length < 3) {
+      setMensagem({
+        tipo: "erro",
+        texto: "O nome da barbearia precisa ter pelo menos 3 caracteres.",
+      });
+      return;
+    }
+
     setSalvando(true);
     setMensagem(null);
     try {
       await api.put("/configuracoes", {
         logoUrl: logoUrl ?? undefined,
-        nomeBarbearia: nomeBarbearia || undefined,
+        nomeBarbearia: nomeTrim || undefined,
         horarioAbertura,
         horarioFechamento,
       });
