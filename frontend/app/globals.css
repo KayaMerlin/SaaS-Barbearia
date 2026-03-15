@@ -4,6 +4,10 @@
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
