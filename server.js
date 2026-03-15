@@ -18,7 +18,8 @@ const assinaturaRoutes = require('./backend/src/routes/assinaturaRoutes');
 const app = express();
 const porta = 4000;
 
-app.use(cors({ origin: 'http://localhost:3000' }));
+const frontOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
+app.use(cors({ origin: frontOrigin }));
 app.use(express.json());
 app.use(servicoRoutes);
 app.use(authRoutes);
@@ -33,6 +34,14 @@ app.use('/configuracoes', configuracaoRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/financeiro', financeiroRoutes);
 app.use('/assinatura', assinaturaRoutes);
+
+app.get('/', (req, res) => {
+  res.json({
+    mensagem: '🚀 API do BarberSaaS Online!',
+    status: 'ok',
+    versao: '1.0.0'
+  });
+});
 
 app.listen(porta, () => {
     console.log(`Servidor rodando na porta ${porta}`);

@@ -19,7 +19,7 @@ export default function CadastroPage() {
     setCarregando(true);
 
     try {
-      const resposta = await fetch("http://localhost:4000/barbearias", {
+      const resposta = await fetch("https://saa-s-barbearia-tau.vercel.app/barbearias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

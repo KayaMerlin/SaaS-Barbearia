@@ -29,7 +29,7 @@ export default function DashboardHome() {
       const dataHoje = new Date().toISOString().split("T")[0];
 
       const resposta = await fetch(
-        `http://localhost:4000/agendamentos?data=${dataHoje}`,
+        `https://saa-s-barbearia-tau.vercel.app/agendamentos?data=${dataHoje}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -56,7 +56,7 @@ export default function DashboardHome() {
     const token = localStorage.getItem("barbersaas_token");
     try {
       const resposta = await fetch(
-        `http://localhost:4000/agendamentos/${id}/status`,
+        `https://saa-s-barbearia-tau.vercel.app/agendamentos/${id}/status`,
         {
           method: "PATCH",
           headers: {

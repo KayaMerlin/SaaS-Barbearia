@@ -38,7 +38,7 @@ export default function AgendamentoPublico() {
       if (!slug) return;
       try {
         const resposta = await fetch(
-          `http://localhost:4000/public/tenant/${slug}`
+          `https://saa-s-barbearia-tau.vercel.app/public/tenant/${slug}`
         );
         if (resposta.ok) {
           const dados = await resposta.json();
@@ -62,7 +62,7 @@ export default function AgendamentoPublico() {
       if (!slug) return;
       try {
         const resposta = await fetch(
-          `http://localhost:4000/public/loja/${slug}/servicos?_t=${Date.now()}`
+          `https://saa-s-barbearia-tau.vercel.app/public/loja/${slug}/servicos?_t=${Date.now()}`
         );
         if (resposta.ok) {
           const dados = await resposta.json();
@@ -92,7 +92,7 @@ export default function AgendamentoPublico() {
       setCarregandoHorarios(true);
       setHoraEscolhida("");
       try {
-        const url = `http://localhost:4000/public/loja/${slug}/horarios?data=${dataEscolhida}&servicoId=${servicoEscolhido.id}`;
+        const url = `https://saa-s-barbearia-tau.vercel.app/public/loja/${slug}/horarios?data=${dataEscolhida}&servicoId=${servicoEscolhido.id}`;
         const resposta = await fetch(url);
         if (resposta.ok) {
           const dados = await resposta.json();
@@ -122,7 +122,7 @@ export default function AgendamentoPublico() {
 
     try {
       const resposta = await fetch(
-        `http://localhost:4000/public/loja/${slug}/agendar`,
+        `https://saa-s-barbearia-tau.vercel.app/public/loja/${slug}/agendar`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -474,7 +474,7 @@ export default function AgendamentoPublico() {
                   onClick={async () => {
                     if (!dadosPix?.transacaoId) return;
                     try {
-                      const res = await fetch("http://localhost:4000/webhook/pix", {
+                      const res = await fetch("https://saa-s-barbearia-tau.vercel.app/webhook/pix", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
