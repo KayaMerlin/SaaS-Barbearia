@@ -18,6 +18,7 @@ export default function ConfiguracoesPage() {
     tipo: "sucesso" | "erro";
     texto: string;
   } | null>(null);
+  const [linkCopiado, setLinkCopiado] = useState(false);
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -49,6 +50,26 @@ export default function ConfiguracoesPage() {
 
   const handleLogoUploadError = (message: string) => {
     setMensagem({ tipo: "erro", texto: message });
+  };
+
+  const slugAgendamento =
+    nomeBarbearia.trim().length > 0
+      ? nomeBarbearia.toLowerCase().replace(/\s+/g, "-")
+      : "";
+  const linkParaClientes =
+    typeof window !== "undefined" && slugAgendamento
+      ? `${window.location.origin}/agendar/${slugAgendamento}`
+      : "";
+
+  const copiarLink = async () => {
+    if (!linkParaClientes) return;
+    try {
+      await navigator.clipboard.writeText(linkParaClientes);
+      setLinkCopiado(true);
+      setTimeout(() => setLinkCopiado(false), 2000);
+    } catch {
+      setMensagem({ tipo: "erro", texto: "Não foi possível copiar o link." });
+    }
   };
 
   const handleSalvarTudo = async () => {
@@ -167,6 +188,38 @@ export default function ConfiguracoesPage() {
               />
             </div>
           </div>
+        </div>
+
+        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm md:p-10">
+          <h3 className="text-xl font-bold text-slate-950 mb-2">
+            Link para seus clientes
+          </h3>
+          <p className="text-sm text-slate-500 mb-6 max-w-lg">
+            Envie este link para seus clientes agendarem pelo celular ou
+            computador. O link usa o nome da barbearia que você configurou acima.
+          </p>
+          {slugAgendamento ? (
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              <input
+                type="text"
+                readOnly
+                value={linkParaClientes}
+                className="flex-1 px-5 py-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-medium text-sm"
+              />
+              <Button
+                type="button"
+                variant="primary"
+                onClick={copiarLink}
+                className="whitespace-nowrap"
+              >
+                {linkCopiado ? "Copiado!" : "Copiar link"}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-slate-500 text-sm">
+              Salve o nome da barbearia acima para gerar o link de agendamento.
+            </p>
+          )}
         </div>
       </div>
 
