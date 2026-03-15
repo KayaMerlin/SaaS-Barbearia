@@ -1,0 +1,105 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id                 String        @id @default(uuid())
+  nome               String
+  logoUrl            String?
+  horarioAbertura    String?
+  horarioFechamento  String?
+  ativo              Boolean       @default(true)
+  statusAssinatura    String        @default("AGUARDANDO_PAGAMENTO")
+  dataVencimento      DateTime?
+  createdAt          DateTime      @default(now())
+  users              User[]
+  pagamentosAssinatura PagamentoAssinatura[]
+  servicos           Servico[]
+  clientes           Cliente[]
+  agendamentos       Agendamento[]
+  transacoes         Transacao[]
+}
+
+model User {
+  id       String @id @default(uuid())
+  nome     String
+  email    String @unique
+  senha    String
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model Servico {
+  id           String        @id @default(uuid())
+  nome         String
+  preco        Decimal
+  duracao      Int
+  tenantId     String
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  agendamentos Agendamento[]
+}
+
+model Cliente {
+  id           String        @id @default(uuid())
+  nome         String
+  telefone     String
+  tenantId     String
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  agendamentos Agendamento[]
+}
+
+model Agendamento {
+  id         String   @id @default(uuid())
+  dataHora   DateTime
+  status     String   @default("PENDENTE")
+  createdAt  DateTime @default(now())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  clienteId  String
+  cliente    Cliente  @relation(fields: [clienteId], references: [id])
+  servicoId  String
+  servico    Servico  @relation(fields: [servicoId], references: [id])
+  transacao  Transacao?
+}
+
+model Transacao {
+  id            String      @id @default(uuid())
+
+  agendamentoId String      @unique
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id])
+
+  tenantId      String
+  tenant        Tenant      @relation(fields: [tenantId], references: [id])
+
+  valor         Decimal     @db.Decimal(10, 2)
+  status        String      @default("PENDENTE")
+  metodo        String      @default("PIX")
+  codigoPix    String?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model PagamentoAssinatura {
+  id         String   @id @default(uuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  valor      Decimal  @db.Decimal(10, 2)
+  status     String   @default("PENDENTE")
+  codigoPix  String?
+  createdAt  DateTime @default(now())
+}
+
+model AuditoriaLog {
+  id         String   @id @default(uuid())
+  tabela     String
+  registroId String
+  acao       String
+  dadosAntigos String
+  dadosNovos String
+  createdAt  DateTime @default(now())
+}
