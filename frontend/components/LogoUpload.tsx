@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { api } from "@/lib/api";
+import { useRef } from "react";
 
 type LogoUploadProps = {
   currentLogoUrl: string | null;
@@ -14,36 +13,31 @@ export default function LogoUpload({
   onUploadSuccess,
   onUploadError,
 }: LogoUploadProps) {
-  const [fazendoUpload, setFazendoUpload] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const arquivo = e.target.files?.[0];
-    if (!arquivo) return;
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    if (arquivo.size > 2 * 1024 * 1024) {
+    if (file.size > 2 * 1024 * 1024) {
       onUploadError("O arquivo é muito grande. O tamanho máximo é 2MB.");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
-    setFazendoUpload(true);
-    const formData = new FormData();
-    formData.append("file", arquivo);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
 
-    try {
-      const resposta = await api.post("/upload", formData);
-      onUploadSuccess(resposta.data.url);
-    } catch (error: unknown) {
-      console.error("Erro no upload", error);
-      const err = error as { response?: { data?: { erro?: string } } };
-      onUploadError(
-        err.response?.data?.erro || "Falha no upload da imagem."
-      );
-    } finally {
-      setFazendoUpload(false);
+    reader.onload = () => {
+      const base64String = reader.result as string;
+      onUploadSuccess(base64String);
       if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    };
+
+    reader.onerror = () => {
+      onUploadError("Erro ao processar a imagem.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    };
   };
 
   return (
@@ -52,11 +46,7 @@ export default function LogoUpload({
         className="relative group cursor-pointer"
         onClick={() => fileInputRef.current?.click()}
       >
-        <div
-          className={`w-32 h-32 rounded-full border-4 border-slate-100 bg-slate-50 flex items-center justify-center overflow-hidden shadow-inner transition ${
-            fazendoUpload ? "opacity-50" : "group-hover:border-blue-100"
-          }`}
-        >
+        <div className="w-32 h-32 rounded-full border-4 border-slate-100 bg-slate-50 flex items-center justify-center overflow-hidden shadow-inner transition group-hover:border-blue-100">
           {currentLogoUrl ? (
             <img
               src={currentLogoUrl}
@@ -73,19 +63,11 @@ export default function LogoUpload({
           )}
         </div>
 
-        {!fazendoUpload && (
-          <div className="absolute inset-0 bg-slate-900/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <span className="text-white text-xs font-bold uppercase tracking-wider">
-              Trocar
-            </span>
-          </div>
-        )}
-
-        {fazendoUpload && (
-          <div className="absolute inset-0 rounded-full flex items-center justify-center bg-white/70">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
-          </div>
-        )}
+        <div className="absolute inset-0 bg-slate-900/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <span className="text-white text-xs font-bold uppercase tracking-wider">
+            Trocar
+          </span>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col items-center text-center md:items-start md:text-left">
@@ -109,12 +91,11 @@ export default function LogoUpload({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={fazendoUpload}
-            className="px-6 py-2.5 bg-slate-950 text-white text-sm font-bold rounded-xl hover:bg-black transition shadow-md disabled:opacity-50"
+            className="px-6 py-2.5 bg-slate-950 text-white text-sm font-bold rounded-xl hover:bg-black transition shadow-md"
           >
-            {fazendoUpload ? "Enviando..." : "Selecionar Arquivo"}
+            Selecionar Arquivo
           </button>
-          {currentLogoUrl && !fazendoUpload && (
+          {currentLogoUrl && (
             <button
               type="button"
               onClick={() => onUploadSuccess("")}
