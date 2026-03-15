@@ -181,7 +181,7 @@ No cadastro, a senha é hasheada com **bcryptjs** (custo 10) antes de ser gravad
 
 ---
 
-## Próximos Passos Sugeridos
+## Próximos Passos 
 
 - Integração com gateway de pagamento real (Mercado Pago, Stripe ou similar) para PIX e assinatura.
 - Notificações (e-mail ou WhatsApp) para confirmação de agendamentos.
