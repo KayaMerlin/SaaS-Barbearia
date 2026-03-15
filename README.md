@@ -2,7 +2,7 @@
 
 O BarberSaaS é uma plataforma SaaS de agendamento e gestão voltada para barbearias. A aplicação utiliza arquitetura multi-tenant: cada barbearia possui sua própria URL pública de agendamento (baseada no nome), painel administrativo, gestão de clientes e serviços, controle financeiro e fluxo de assinatura B2B.
 
-**Aplicação em produção:** [BarberSaaS](https://saa-s-barbearia-3i7d-oncps2y38-kayamerlins-projects.vercel.app/)
+**Aplicação em produção:** [BarberSaaS](https://saa-s-barbearia-4ctt.vercel.app/)
 
 ---
 
@@ -157,9 +157,9 @@ O frontend estará em `http://localhost:3000`. O arquivo `frontend/lib/api.ts` u
 
 ### Projeto Backend (API)
 
-- **DATABASE_URL:** URL de conexão do banco PostgreSQL (Neon).
+- **DATABASE_URL:** URL de conexão do banco PostgreSQL (Neon). Use `?sslmode=verify-full` na query string para evitar o aviso de segurança do driver `pg` (evite `sslmode=require`).
 - **JWT_SECRET:** Chave utilizada para assinatura e verificação dos tokens JWT.
-- **FRONTEND_URL:** URL do frontend na Vercel (ex.: `https://saa-s-barbearia-3i7d-oncps2y38-kayamerlins-projects.vercel.app`) para configuração do CORS. Sem barra no final.
+- **FRONTEND_URL:** URL do frontend na Vercel (ex.: `https://saa-s-barbearia-4ctt.vercel.app`) para configuração do CORS. Sem barra no final.
 
 ### Projeto Frontend
 
