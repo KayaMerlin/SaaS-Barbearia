@@ -1,0 +1,29 @@
+const clienteService = require('../services/ClienteService');
+
+class ClienteController {
+    async criar(req, res) {
+        try {
+            const { nome, telefone } = req.body;
+            const tenantId = req.usuario.tenantId;
+
+            const novoCliente = await clienteService.criarCliente(nome, telefone, tenantId);
+
+            res.status(201).json(novoCliente);
+        } catch (error) {
+            res.status(400).json({ erro: error.message });
+        }
+    }
+
+    async listar(req, res) {
+        try {
+            const tenantId = req.usuario.tenantId;
+            const clientes = await clienteService.listarClientes(tenantId);
+
+            res.json(clientes);
+        } catch (error) {
+            res.status(500).json({ erro: error.message });
+        }
+    }
+}
+
+module.exports = new ClienteController();

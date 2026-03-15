@@ -1,0 +1,558 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+
+type TenantPublico = { nome: string; logoUrl: string | null };
+
+export default function AgendamentoPublico() {
+  const params = useParams();
+  const slug = params.slug as string;
+
+  const [barbearia, setBarbearia] = useState<TenantPublico | null>(null);
+  const [carregandoTenant, setCarregandoTenant] = useState(true);
+  const [erroTenant, setErroTenant] = useState<string | null>(null);
+
+  const [passo, setPasso] = useState(1);
+  const [servicosReais, setServicosReais] = useState<any[]>([]);
+  const [carregandoServicos, setCarregandoServicos] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [dadosPix, setDadosPix] = useState<{
+    codigo: string;
+    valor: number;
+    transacaoId: string;
+  } | null>(null);
+  const [copiado, setCopiado] = useState(false);
+  const [erro, setErro] = useState("");
+
+  const [servicoEscolhido, setServicoEscolhido] = useState<any>(null);
+  const [dataEscolhida, setDataEscolhida] = useState("");
+  const [horariosDisponiveis, setHorariosDisponiveis] = useState<string[]>([]);
+  const [carregandoHorarios, setCarregandoHorarios] = useState(false);
+  const [horaEscolhida, setHoraEscolhida] = useState("");
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
+
+  useEffect(() => {
+    const buscarTenant = async () => {
+      if (!slug) return;
+      try {
+        const resposta = await fetch(
+          `http://localhost:4000/public/tenant/${slug}`
+        );
+        if (resposta.ok) {
+          const dados = await resposta.json();
+          setBarbearia({ nome: dados.nome, logoUrl: dados.logoUrl ?? null });
+        } else {
+          const dados = await resposta.json().catch(() => ({}));
+          setErroTenant(dados.erro || "Barbearia não encontrada.");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar barbearia", error);
+        setErroTenant("Falha ao carregar informações da barbearia.");
+      } finally {
+        setCarregandoTenant(false);
+      }
+    };
+    buscarTenant();
+  }, [slug]);
+
+  useEffect(() => {
+    const buscarServicos = async () => {
+      if (!slug) return;
+      try {
+        const resposta = await fetch(
+          `http://localhost:4000/public/loja/${slug}/servicos?_t=${Date.now()}`
+        );
+        if (resposta.ok) {
+          const dados = await resposta.json();
+          setServicosReais(dados);
+        } else {
+          const dados = await resposta.json().catch(() => ({}));
+          setErro(dados.erro || "Barbearia não encontrada.");
+          setServicosReais([]);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar serviços:", error);
+        setServicosReais([]);
+      } finally {
+        setCarregandoServicos(false);
+      }
+    };
+    buscarServicos();
+  }, [slug]);
+
+  useEffect(() => {
+    if (!slug || !dataEscolhida || !servicoEscolhido?.id) {
+      setHorariosDisponiveis([]);
+      setHoraEscolhida("");
+      return;
+    }
+    const buscarHorarios = async () => {
+      setCarregandoHorarios(true);
+      setHoraEscolhida("");
+      try {
+        const url = `http://localhost:4000/public/loja/${slug}/horarios?data=${dataEscolhida}&servicoId=${servicoEscolhido.id}`;
+        const resposta = await fetch(url);
+        if (resposta.ok) {
+          const dados = await resposta.json();
+          setHorariosDisponiveis(Array.isArray(dados) ? dados : []);
+          setErro("");
+        } else {
+          const err = await resposta.json().catch(() => ({}));
+          setHorariosDisponiveis([]);
+          setErro(err.erro || "Não foi possível carregar os horários.");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar horários:", error);
+        setHorariosDisponiveis([]);
+      } finally {
+        setCarregandoHorarios(false);
+      }
+    };
+    buscarHorarios();
+  }, [slug, dataEscolhida, servicoEscolhido?.id]);
+
+  const handleFinalizar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSalvando(true);
+    setErro("");
+
+    const dataHoraISO = `${dataEscolhida}T${horaEscolhida}:00.000Z`;
+
+    try {
+      const resposta = await fetch(
+        `http://localhost:4000/public/loja/${slug}/agendar`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            servicoId: servicoEscolhido.id,
+            dataHora: dataHoraISO,
+            nome,
+            telefone,
+          }),
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (resposta.ok) {
+        setDadosPix({
+          codigo: dados.codigoPix ?? "",
+          valor: Number(dados.valor) || 0,
+          transacaoId: dados.transacaoId ?? "",
+        });
+        setPasso(4);
+      } else {
+        setErro(dados.erro || "Ops! Ocorreu um erro ao agendar.");
+      }
+    } catch (error) {
+      setErro("Erro de conexão. Tente novamente.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  if (carregandoTenant && !barbearia) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center font-sans">
+        <div className="text-slate-500 font-medium">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (erroTenant || !barbearia) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-center p-6">
+        <span className="text-6xl mb-4">🏠</span>
+        <h2 className="text-3xl font-black text-slate-950 tracking-tight mb-2">
+          Página não encontrada
+        </h2>
+        <p className="text-lg text-slate-600 max-w-lg mb-8">
+          O link pode estar incorreto ou a barbearia está inativa. Verifique o
+          endereço e tente novamente.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-50 flex justify-center font-sans p-0 sm:p-4 md:p-8">
+      <div className="w-full max-w-4xl bg-white shadow-2xl rounded-none sm:rounded-3xl border border-slate-100 flex flex-col md:flex-row overflow-hidden relative min-h-screen md:min-h-0">
+        <div className="md:w-1/3 bg-slate-950 text-white p-6 md:p-10 flex md:flex-col items-center md:items-start md:justify-start gap-4 md:gap-8 border-b md:border-b-0 md:border-r border-slate-800">
+          <div className="flex md:flex-col items-center md:items-start gap-4">
+            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-slate-700 overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-2xl md:text-3xl shadow-xl flex-shrink-0">
+              {barbearia.logoUrl ? (
+                <img
+                  src={barbearia.logoUrl}
+                  alt={`Logo ${barbearia.nome}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-slate-400">BS</span>
+              )}
+            </div>
+            <div>
+              <h1 className="text-xl md:text-3xl font-black tracking-tighter text-white leading-tight">
+                {barbearia.nome}
+              </h1>
+              <p className="text-blue-400 text-xs md:text-sm flex items-center gap-1 mt-1 font-medium">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />{" "}
+                Aberto para Agendamentos
+              </p>
+            </div>
+          </div>
+        </div>
+
+       
+        <div className="flex-1 p-6 md:p-12 overflow-y-auto pb-32 md:pb-12">
+          {passo === 1 && (
+            <div className="animate-in slide-in-from-right-4 duration-300">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-950 tracking-tight mb-2">
+                Qual serviço você deseja?
+              </h2>
+              <p className="text-slate-500 text-sm md:text-base mb-8">
+                Escolha abaixo o procedimento que você quer agendar hoje.
+              </p>
+
+              {carregandoServicos ? (
+                <p className="text-slate-500 text-sm text-center mt-10">
+                  Buscando cardápio de serviços...
+                </p>
+              ) : erro && servicosReais.length === 0 ? (
+                <p className="text-slate-500 text-sm text-center mt-10">
+                  {erro}
+                </p>
+              ) : servicosReais.length === 0 ? (
+                <p className="text-slate-500 text-sm text-center mt-10">
+                  Esta barbearia ainda não possui serviços cadastrados.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {servicosReais.map((servico) => (
+                    <div
+                      key={servico.id}
+                      onClick={() => setServicoEscolhido(servico)}
+                      className={`p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between min-h-[120px] ${
+                        servicoEscolhido?.id === servico.id
+                          ? "border-blue-600 bg-blue-50 shadow-lg shadow-blue-500/10"
+                          : "border-slate-100 bg-white hover:border-slate-300"
+                      }`}
+                    >
+                      <div>
+                        <h3 className="text-base md:text-lg font-bold text-slate-900 mb-1">
+                          {servico.nome}
+                        </h3>
+                        <p className="text-xs md:text-sm text-slate-500 font-medium mb-3">
+                          ⏱ Duração: {servico.duracao} min
+                        </p>
+                      </div>
+                      <span className="font-black text-blue-700 text-lg md:text-xl">
+                        {new Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(parseFloat(servico.preco))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {passo === 2 && (
+            <div className="animate-in slide-in-from-right-4 duration-300">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-950 tracking-tight mb-2">
+                Para quando?
+              </h2>
+              <p className="text-slate-500 text-sm md:text-base mb-8">
+                Selecione uma data e um horário disponível abaixo.
+              </p>
+
+              <div className="mb-10">
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                  {[0, 1, 2, 3, 4, 5, 6].map((diaOffset) => {
+                    const data = new Date();
+                    data.setDate(data.getDate() + diaOffset);
+                    const isoDate = data.toISOString().split("T")[0];
+                    const dataFormatada = data.toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                    });
+
+                    let label = "";
+                    if (diaOffset === 0) label = "Hoje";
+                    else if (diaOffset === 1) label = "Amanhã";
+                    else
+                      label = data
+                        .toLocaleDateString("pt-BR", { weekday: "short" })
+                        .replace(".", "");
+
+                    return (
+                      <button
+                        key={isoDate}
+                        type="button"
+                        onClick={() => setDataEscolhida(isoDate)}
+                        className={`flex-shrink-0 flex flex-col items-center justify-center w-[80px] md:w-[96px] h-[88px] md:h-[104px] rounded-2xl border-2 transition ${
+                          dataEscolhida === isoDate
+                            ? "border-blue-600 bg-blue-50 text-blue-700 shadow-md shadow-blue-500/10"
+                            : "border-slate-100 bg-white text-slate-500 hover:border-slate-300"
+                        }`}
+                      >
+                        <span className="text-[11px] md:text-xs font-bold uppercase mb-1">
+                          {label}
+                        </span>
+                        <span
+                          className={`text-2xl md:text-3xl font-black ${
+                            dataEscolhida === isoDate
+                              ? "text-blue-700"
+                              : "text-slate-950"
+                          }`}
+                        >
+                          {dataFormatada}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {dataEscolhida && (
+                <div className="animate-in fade-in duration-300">
+                  <label className="block text-sm md:text-base font-bold text-slate-700 mb-4">
+                    Horários disponíveis para este dia:
+                  </label>
+                  {carregandoHorarios ? (
+                    <p className="text-slate-500 text-sm py-4">Carregando horários...</p>
+                  ) : horariosDisponiveis.length === 0 ? (
+                    <p className="text-slate-500 text-sm py-4">Nenhum horário disponível para esta data e serviço.</p>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                      {horariosDisponiveis.map((hora) => (
+                        <button
+                          key={hora}
+                          type="button"
+                          onClick={() => setHoraEscolhida(hora)}
+                          className={`py-3.5 rounded-xl font-bold text-sm md:text-base transition ${
+                            horaEscolhida === hora
+                              ? "bg-slate-950 text-white shadow-lg"
+                              : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-slate-950"
+                          }`}
+                        >
+                          {hora}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {passo === 3 && (
+            <div className="animate-in slide-in-from-right-4 duration-300 flex flex-col">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-950 tracking-tight mb-2">
+                Tudo pronto!
+              </h2>
+              <p className="text-slate-500 text-sm md:text-base mb-8">
+                Preencha seus dados para finalizarmos o seu agendamento.
+              </p>
+
+              {erro && (
+                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm font-medium rounded-r">
+                  {erro}
+                </div>
+              )}
+
+              <form
+                id="form-agendamento"
+                onSubmit={handleFinalizar}
+                className="grid grid-cols-1 md:grid-cols-2 gap-8"
+              >
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                      Seu Nome Completo
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Ex: João Pedro da Silva"
+                      className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium text-base shadow-inner bg-slate-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                      Seu WhatsApp
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={telefone}
+                      onChange={(e) => setTelefone(e.target.value)}
+                      placeholder="(11) 99999-9999"
+                      className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium text-base shadow-inner bg-slate-50"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner md:mt-1 h-fit">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                    Resumo do Pedido
+                  </h4>
+                  <p className="text-lg font-bold text-slate-950 mb-1">
+                    {servicoEscolhido?.nome}
+                  </p>
+                  <p className="text-sm text-slate-600 mb-3">
+                    {dataEscolhida?.split("-").reverse().join("/")} às{" "}
+                    {horaEscolhida}
+                  </p>
+                  <div className="border-t border-slate-200 my-4"></div>
+                  <p className="font-black text-blue-700 text-3xl">
+                    {servicoEscolhido &&
+                      new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(parseFloat(servicoEscolhido.preco))}
+                  </p>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {passo === 4 && dadosPix && (
+            <div className="animate-in zoom-in-95 duration-500 flex flex-col items-center justify-center text-center h-full pt-4 md:pt-10">
+              <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-4xl mb-6 shadow-lg shadow-blue-100/50">
+                💲
+              </div>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-950 mb-2 tracking-tighter">
+                Falta pouco!
+              </h2>
+              <p className="text-sm md:text-base text-slate-500 mb-8 max-w-sm">
+                Seu horário está reservado. Realize o pagamento via PIX para
+                confirmar o agendamento.
+              </p>
+
+              <div className="w-full max-w-sm bg-slate-50 p-6 rounded-3xl border border-slate-200 shadow-sm mb-6">
+                <p className="text-sm text-slate-500 mb-1 font-bold">
+                  Valor a pagar
+                </p>
+                <p className="text-4xl font-black text-blue-700 mb-6">
+                  {new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(dadosPix.valor)}
+                </p>
+
+                <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between gap-3 mb-4">
+                  <span className="text-xs text-slate-400 font-mono truncate select-all">
+                    {dadosPix.codigo}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(dadosPix.codigo);
+                    setCopiado(true);
+                    setTimeout(() => setCopiado(false), 3000);
+                  }}
+                  className={`w-full py-3.5 rounded-xl font-bold text-sm transition shadow-md ${
+                    copiado
+                      ? "bg-green-500 text-white"
+                      : "bg-slate-950 text-white hover:bg-black"
+                  }`}
+                >
+                  {copiado ? "✓ Código Copiado!" : "Copiar Código PIX"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!dadosPix?.transacaoId) return;
+                    try {
+                      const res = await fetch("http://localhost:4000/webhook/pix", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          transacaoId: dadosPix.transacaoId,
+                          statusPagamento: "PAGO",
+                        }),
+                      });
+                      if (res.ok) {
+                        alert("Pagamento simulado. A trigger de auditoria já registrou no banco.");
+                      } else {
+                        alert("Erro ao simular pagamento.");
+                      }
+                    } catch {
+                      alert("Erro ao simular pagamento.");
+                    }
+                  }}
+                  className="w-full mt-4 py-3 rounded-xl font-bold text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 transition border border-purple-200 border-dashed"
+                >
+                  Pagar PIX (simulação portfólio)
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="text-slate-500 font-bold text-sm hover:text-slate-900 transition underline"
+              >
+                Já paguei / Voltar ao início
+              </button>
+            </div>
+          )}
+        </div>
+
+        {passo < 4 && (
+          <div className="absolute bottom-0 left-0 right-0 p-5 bg-white border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-20 md:relative md:flex md:flex-col md:w-60 md:min-w-[240px] md:border-l md:border-slate-100 md:bg-slate-50 md:shadow-none md:justify-end md:p-8">
+            <div className="flex gap-4 md:flex-col md:gap-4">
+              {passo > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setPasso(passo - 1)}
+                  className="px-6 py-4 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition md:w-full md:mb-0"
+                >
+                  Voltar
+                </button>
+              )}
+
+              {passo === 1 ? (
+                <button
+                  type="button"
+                  disabled={!servicoEscolhido}
+                  onClick={() => setPasso(2)}
+                  className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition shadow-md shadow-blue-600/20 md:w-full"
+                >
+                  Continuar
+                </button>
+              ) : passo === 2 ? (
+                <button
+                  type="button"
+                  disabled={!dataEscolhida || !horaEscolhida}
+                  onClick={() => setPasso(3)}
+                  className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition shadow-md shadow-blue-600/20 md:w-full"
+                >
+                  Confirmar Horário
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  form="form-agendamento"
+                  disabled={salvando}
+                  className="flex-1 bg-green-500 text-white font-black py-4 rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-500/20 text-lg disabled:opacity-70 md:w-full md:text-xl"
+                >
+                  {salvando ? "Aguarde..." : "Agendar Agora"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
