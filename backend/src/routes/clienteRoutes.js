@@ -9,5 +9,6 @@ const router = express.Router();
 
 router.post('/clientes', verificarToken, verificarAssinaturaAtiva, validarDados(clienteSchema), ClienteController.criar);
 router.get('/clientes', verificarToken, verificarAssinaturaAtiva, ClienteController.listar);
+router.delete('/clientes/:id', verificarToken, verificarAssinaturaAtiva, ClienteController.excluir);
 
 module.exports = router;
