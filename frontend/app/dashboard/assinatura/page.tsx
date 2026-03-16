@@ -17,7 +17,6 @@ export default function AssinaturaPage() {
     qrCodeBase64?: string;
   } | null>(null);
   const [copiado, setCopiado] = useState(false);
-  const [jaAtivo, setJaAtivo] = useState(false);
   const [status, setStatus] = useState<{
     dataVencimento: string | null;
     statusAssinatura: string;
@@ -33,18 +32,13 @@ export default function AssinaturaPage() {
           statusAssinatura: res.data.statusAssinatura ?? "AGUARDANDO_PAGAMENTO",
           podeAcessarPainel: res.data.podeAcessarPainel === true,
         });
-        if (res.data.podeAcessarPainel === true) {
-          setJaAtivo(true);
-          router.replace("/dashboard");
-          return;
-        }
       } catch {
       } finally {
         setCarregandoStatus(false);
       }
     };
     checar();
-  }, [router]);
+  }, []);
 
   const gerarPix = async () => {
     setGerandoPix(true);
@@ -81,7 +75,19 @@ export default function AssinaturaPage() {
     ? status.dataVencimento && new Date(status.dataVencimento) < new Date()
     : false;
 
-  if (carregandoStatus || jaAtivo) {
+  const calcularDiasRestantes = (dataVencimento: string | null): number => {
+    if (!dataVencimento) return 0;
+    const hoje = new Date();
+    const vencimento = new Date(dataVencimento);
+    const diffInMs = vencimento.getTime() - hoje.getTime();
+    const dias = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+    return dias > 0 ? dias : 0;
+  };
+
+  const diasRestantes = status?.dataVencimento ? calcularDiasRestantes(status.dataVencimento) : 0;
+  const planoAtivo = status?.podeAcessarPainel === true;
+
+  if (carregandoStatus) {
     return (
       <div className="p-8 text-center text-slate-500 font-medium">
         Carregando...
@@ -96,20 +102,41 @@ export default function AssinaturaPage() {
           Meu Plano
         </h2>
         <p className="text-slate-500 text-sm mt-1">
-          Pague a mensalidade de R$ 49,90 via PIX para liberar o painel completo.
+          {planoAtivo
+            ? "Gerencie sua assinatura e renove quando quiser."
+            : "Pague a mensalidade de R$ 49,90 via PIX para liberar o painel completo."}
         </p>
       </div>
+
+      {planoAtivo && status?.dataVencimento && !vencido && (
+        <div className="mb-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row justify-between items-center gap-6">
+          <div>
+            <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full uppercase mb-2">
+              Plano Profissional
+            </span>
+            <p className="text-slate-500 text-sm">Seu plano renova em:</p>
+            <p className="text-xl font-semibold text-slate-900">
+              {formatarData(status.dataVencimento)}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-slate-500 mb-1">Dias restantes</p>
+            <div className="text-4xl font-black text-blue-600">{diasRestantes}</div>
+          </div>
+        </div>
+      )}
+
+      {diasRestantes <= 7 && planoAtivo && diasRestantes > 0 && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <p className="text-amber-800 font-medium mb-3">Sua assinatura vence em breve!</p>
+          <p className="text-sm text-amber-700 mb-2">Renove agora para não perder o acesso.</p>
+        </div>
+      )}
 
       {vencido && (
         <div className="mb-6 p-4 rounded-2xl bg-red-50 border-2 border-red-200 text-red-800 font-semibold text-sm">
           Sua assinatura está vencida. Gere o PIX abaixo para reativar o painel.
         </div>
-      )}
-
-      {status?.dataVencimento && !vencido && (
-        <p className="text-slate-600 text-sm mb-4">
-          Próximo vencimento: <strong>{formatarData(status.dataVencimento)}</strong>
-        </p>
       )}
 
       <div className="bg-slate-50 border border-slate-200 rounded-3xl p-8 shadow-sm">
@@ -191,7 +218,7 @@ export default function AssinaturaPage() {
               statusAssinatura: res.data.statusAssinatura ?? "AGUARDANDO_PAGAMENTO",
               podeAcessarPainel: res.data.podeAcessarPainel === true,
             });
-            if (res.data.podeAcessarPainel) router.replace("/dashboard");
+            if (res.data.podeAcessarPainel) setStatus({ dataVencimento: res.data.dataVencimento ?? null, statusAssinatura: res.data.statusAssinatura ?? "ATIVO", podeAcessarPainel: true });
           } catch {
           }
         }}

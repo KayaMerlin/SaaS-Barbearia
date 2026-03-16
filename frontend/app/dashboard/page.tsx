@@ -156,7 +156,7 @@ export default function DashboardHome() {
               Atualizado agora
             </span>
           </div>
-          <div className="flex-1 w-full h-full min-h-[250px]">
+          <div className="w-full h-[350px] min-h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dadosGrafico}>
                 <defs>
