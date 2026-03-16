@@ -250,30 +250,8 @@ export default function ConfiguracoesPage() {
           <p className="text-sm text-slate-500 mb-6 max-w-lg">
             Conecte sua conta Mercado Pago para receber o pagamento do sinal/corte direto no seu app. Os clientes verão o QR Code PIX real ao agendar. O token não é exibido por segurança.
           </p>
-          {hasMercadoPago && (
-            <p className="text-sm text-green-600 font-medium mb-4">
-              Mercado Pago conectado. Para alterar, insira um novo token abaixo e salve.
-            </p>
-          )}
-          <div className="space-y-6">
-            <div className="max-w-xl">
-              <label
-                htmlFor="mercadoPagoToken"
-                className="block text-sm font-bold text-slate-700 mb-2"
-              >
-                Access Token do Mercado Pago
-              </label>
-              <input
-                id="mercadoPagoToken"
-                type="password"
-                value={mercadoPagoAccessToken}
-                onChange={(e) => setMercadoPagoAccessToken(e.target.value)}
-                placeholder={hasMercadoPago ? "Deixe em branco para manter o atual" : "Cole seu token de produção ou teste (Credenciais no painel MP)"}
-                className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium text-base shadow-inner bg-slate-50"
-                autoComplete="off"
-              />
-            </div>
 
+          <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <Toggle
                 checked={aceitaPix}
@@ -286,6 +264,36 @@ export default function ConfiguracoesPage() {
                 label="Aceitar pagamento no local (dinheiro/cartão)"
               />
             </div>
+
+            {aceitaPix && (
+              <div className="space-y-3 max-w-xl">
+                {hasMercadoPago && (
+                  <p className="text-sm text-green-600 font-medium">
+                    Mercado Pago conectado. Para alterar, insira um novo token abaixo e salve.
+                  </p>
+                )}
+                <div>
+                  <label
+                    htmlFor="mercadoPagoToken"
+                    className="block text-sm font-bold text-slate-700 mb-2"
+                  >
+                    Access Token do Mercado Pago
+                  </label>
+                  <input
+                    id="mercadoPagoToken"
+                    type="password"
+                    value={mercadoPagoAccessToken}
+                    onChange={(e) => setMercadoPagoAccessToken(e.target.value)}
+                    placeholder={hasMercadoPago ? "Deixe em branco para manter o atual" : "Cole seu token de produção ou teste (Credenciais no painel MP)"}
+                    className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium text-base shadow-inner bg-slate-50"
+                    autoComplete="off"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Este token é usado apenas para gerar os pagamentos PIX desta barbearia.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
