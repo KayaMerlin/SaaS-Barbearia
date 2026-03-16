@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const bcrypt = require('bcryptjs');
+const { Prisma } = require('@prisma/client');
 
 function slugify(text) {
     return text
@@ -13,39 +14,46 @@ function slugify(text) {
 
 class BarbeariaService {
     async criarBarbearia(nomeBarbearia, nomeUsuario, email, senha) {
-        const senhaHash = await bcrypt.hash(senha, 10);
-        const dataTesteGratis = new Date();
-        dataTesteGratis.setDate(dataTesteGratis.getDate() + 7);
+        try {
+            const senhaHash = await bcrypt.hash(senha, 10);
+            const dataTesteGratis = new Date();
+            dataTesteGratis.setDate(dataTesteGratis.getDate() + 7);
 
-        const novaBarbearia = await prisma.tenant.create({
-            data: {
-                nome: nomeBarbearia,
-                ativo: true,
-                statusAssinatura: 'TRIAL',
-                dataVencimento: dataTesteGratis,
-                users: {
-                    create: {
-                        nome: nomeUsuario,
-                        email: email,
-                        senha: senhaHash
+            const novaBarbearia = await prisma.tenant.create({
+                data: {
+                    nome: nomeBarbearia,
+                    ativo: true,
+                    statusAssinatura: 'TRIAL',
+                    dataVencimento: dataTesteGratis,
+                    users: {
+                        create: {
+                            nome: nomeUsuario,
+                            email: email,
+                            senha: senhaHash
+                        }
                     }
+                },
+                include: {
+                    users: true
                 }
-            },
-            include: {
-                users: true
+            });
+
+            const slugBase = slugify(nomeBarbearia);
+            const sufixo = novaBarbearia.id.replace(/-/g, '').substring(0, 8);
+            const slug = `${slugBase}-${sufixo}`;
+
+            await prisma.tenant.update({
+                where: { id: novaBarbearia.id },
+                data: { slug }
+            });
+
+            return { ...novaBarbearia, slug };
+        } catch (err) {
+            if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+                throw new Error('Já existe uma conta com este e-mail.');
             }
-        });
-
-        const slugBase = slugify(nomeBarbearia);
-        const sufixo = novaBarbearia.id.replace(/-/g, '').substring(0, 8);
-        const slug = `${slugBase}-${sufixo}`;
-
-        await prisma.tenant.update({
-            where: { id: novaBarbearia.id },
-            data: { slug }
-        });
-
-        return { ...novaBarbearia, slug };
+            throw err;
+        }
     }
 }
 

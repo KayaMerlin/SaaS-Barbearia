@@ -17,7 +17,8 @@ class BarbeariaController {
                 dados: novaBarbearia
             });
         } catch (error) {
-            res.status(500).json({
+            const status = error.message === 'Já existe uma conta com este e-mail.' ? 400 : 500;
+            res.status(status).json({
                 mensagem: "Erro ao criar barbearia e administrador",
                 erro: error.message
             });
