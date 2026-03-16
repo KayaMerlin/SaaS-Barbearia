@@ -18,12 +18,14 @@ model Tenant {
   statusAssinatura       String        @default("AGUARDANDO_PAGAMENTO")
   dataVencimento         DateTime?
   createdAt              DateTime      @default(now())
-  users              User[]
-  pagamentosAssinatura PagamentoAssinatura[]
-  servicos           Servico[]
-  clientes           Cliente[]
-  agendamentos       Agendamento[]
-  transacoes         Transacao[]
+  aceitaPix              Boolean       @default(false)
+  aceitaDinheiro         Boolean       @default(true)
+  users                  User[]
+  pagamentosAssinatura   PagamentoAssinatura[]
+  servicos               Servico[]
+  clientes               Cliente[]
+  agendamentos           Agendamento[]
+  transacoes             Transacao[]
 }
 
 model User {
