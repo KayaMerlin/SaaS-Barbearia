@@ -39,27 +39,6 @@ export default function CheckoutPix({
     setTimeout(() => setCopiado(false), 3000);
   };
 
-  const simularPagamento = async () => {
-    if (!transacaoId) return;
-    try {
-      const res = await fetch(`${baseUrl}/webhook/pix`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transacaoId,
-          statusPagamento: "PAGO",
-        }),
-      });
-      if (res.ok) {
-        alert("Pagamento simulado. O barbeiro verá o agendamento confirmado.");
-      } else {
-        alert("Erro ao simular pagamento.");
-      }
-    } catch {
-      alert("Erro ao simular pagamento.");
-    }
-  };
-
   return (
     <div className="animate-in zoom-in-95 duration-500 flex flex-col items-center text-center pt-4 md:pt-10">
       <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-4xl mb-6 shadow-lg shadow-blue-100/50">
@@ -99,7 +78,7 @@ export default function CheckoutPix({
         </p>
 
         {qrCodeBase64 && (
-          <div className="flex justify-center mb-4">
+          <div className="hidden md:flex justify-center mb-4">
             <img
               src={`data:image/png;base64,${qrCodeBase64}`}
               alt="QR Code PIX"
@@ -117,7 +96,7 @@ export default function CheckoutPix({
         <button
           type="button"
           onClick={copiarPix}
-          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition shadow-md ${
+          className={`w-full flex items-center justify-center gap-2 py-4 md:py-3.5 rounded-xl font-bold text-base md:text-sm transition shadow-md ${
             copiado
               ? "bg-green-500 text-white"
               : "bg-slate-950 text-white hover:bg-black"
@@ -158,14 +137,6 @@ export default function CheckoutPix({
               Copiar código PIX
             </>
           )}
-        </button>
-
-        <button
-          type="button"
-          onClick={simularPagamento}
-          className="w-full mt-4 py-3 rounded-xl font-bold text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 transition border border-purple-200 border-dashed"
-        >
-          Simular pagamento PIX (portfólio)
         </button>
       </div>
 

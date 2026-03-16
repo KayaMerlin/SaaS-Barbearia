@@ -1,21 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import ListaServicos from "@/components/agendamento/ListaServicos";
 import CalendarioHorarios from "@/components/agendamento/CalendarioHorarios";
 import FormResumo from "@/components/agendamento/FormResumo";
-import CheckoutPix from "@/components/agendamento/CheckoutPix";
 import { api } from "@/lib/api";
 
 const BASE_URL = typeof window !== "undefined" ? api.defaults.baseURL ?? "https://saa-s-barbearia-tau.vercel.app" : "https://saa-s-barbearia-tau.vercel.app";
 
 type TenantPublico = { nome: string; logoUrl: string | null };
 type Servico = { id: string; nome: string; preco: string; duracao?: number };
-type DadosPix = { codigo: string; valor: number; transacaoId: string; qrCodeBase64?: string | null };
-
 export default function AgendamentoPublico() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
 
   const [barbearia, setBarbearia] = useState<TenantPublico | null>(null);
@@ -26,7 +24,6 @@ export default function AgendamentoPublico() {
   const [servicosReais, setServicosReais] = useState<Servico[]>([]);
   const [carregandoServicos, setCarregandoServicos] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [dadosPix, setDadosPix] = useState<DadosPix | null>(null);
   const [erro, setErro] = useState("");
 
   const [servicoEscolhido, setServicoEscolhido] = useState<Servico | null>(null);
@@ -86,6 +83,16 @@ export default function AgendamentoPublico() {
 
   const handleFinalizar = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nomeLimpo = nome.trim();
+    const telefoneLimpo = telefone.replace(/\D/g, "");
+    if (nomeLimpo.length < 3 || !/^[a-zA-ZÀ-ÿ\s]+$/.test(nomeLimpo)) {
+      setErro("Digite um nome válido (apenas letras, no mínimo 3 caracteres).");
+      return;
+    }
+    if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+      setErro("Digite um telefone válido com DDD (ex: 11999999999).");
+      return;
+    }
     setSalvando(true);
     setErro("");
     const dataHoraISO = `${dataEscolhida}T${horaEscolhida}:00-03:00`;
@@ -96,19 +103,15 @@ export default function AgendamentoPublico() {
         body: JSON.stringify({
           servicoId: servicoEscolhido!.id,
           dataHora: dataHoraISO,
-          nome,
-          telefone,
+          nome: nomeLimpo,
+          telefone: telefone.trim(),
         }),
       });
       const dados = await resposta.json();
       if (resposta.ok) {
-        setDadosPix({
-          codigo: dados.codigoPix ?? "",
-          valor: Number(dados.valor) || 0,
-          transacaoId: dados.transacaoId ?? "",
-          qrCodeBase64: dados.qrCodeBase64 ?? null,
-        });
-        setPasso(4);
+        const id = dados.transacaoId ?? "";
+        if (id) router.push(`/agendar/${slug}/pagamento/${id}`);
+        else setErro("Resposta inválida. Tente novamente.");
       } else {
         setErro(dados.erro || "Ops! Ocorreu um erro ao agendar.");
       }
@@ -198,16 +201,6 @@ export default function AgendamentoPublico() {
               erro={erro}
               onSubmit={handleFinalizar}
               salvando={salvando}
-            />
-          )}
-          {passo === 4 && dadosPix && (
-            <CheckoutPix
-              valor={dadosPix.valor}
-              codigoPix={dadosPix.codigo}
-              transacaoId={dadosPix.transacaoId}
-              baseUrl={BASE_URL}
-              onVoltar={() => window.location.reload()}
-              qrCodeBase64={dadosPix.qrCodeBase64}
             />
           )}
         </div>

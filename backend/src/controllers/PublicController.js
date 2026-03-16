@@ -55,6 +55,15 @@ class PublicController {
                 return res.status(400).json({ erro: "servicoId, dataHora, nome e telefone são obrigatórios." });
             }
 
+            const nomeLimpo = String(nome).trim();
+            if (nomeLimpo.length < 3 || !/^[a-zA-ZÀ-ÿ\s]+$/.test(nomeLimpo)) {
+                return res.status(400).json({ erro: "Nome inválido. Use apenas letras, no mínimo 3 caracteres." });
+            }
+            const telefoneLimpo = String(telefone).replace(/\D/g, "");
+            if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+                return res.status(400).json({ erro: "Telefone inválido. Informe DDD + número (10 ou 11 dígitos)." });
+            }
+
             const dataHoraDate = new Date(dataHora);
             if (dataHoraDate.getTime() < Date.now()) {
                 return res.status(400).json({ erro: "Não é possível marcar no passado." });
@@ -83,12 +92,12 @@ class PublicController {
 
             const resultado = await prisma.$transaction(async (tx) => {
                 let cliente = await tx.cliente.findFirst({
-                    where: { telefone, tenantId }
+                    where: { telefone: telefone.trim(), tenantId }
                 });
 
                 if (!cliente) {
                     cliente = await tx.cliente.create({
-                        data: { nome, telefone, tenantId }
+                        data: { nome: nomeLimpo, telefone: telefone.trim(), tenantId }
                     });
                 }
 
@@ -227,6 +236,34 @@ class PublicController {
                 return res.status(400).json({ erro: error.message });
             }
             res.status(500).json({ erro: error.message || 'Erro ao calcular horários.' });
+        }
+    }
+
+    async obterPagamento(req, res) {
+        try {
+            const { slug, transacaoId } = req.params;
+            const tenantId = await this._getTenantBySlug(slug);
+
+            const transacao = await prisma.transacao.findFirst({
+                where: { id: transacaoId, tenantId },
+                include: { agendamento: true }
+            });
+
+            if (!transacao) {
+                return res.status(404).json({ erro: 'Pagamento não encontrado.' });
+            }
+
+            res.json({
+                status: transacao.agendamento.status,
+                codigoPix: transacao.codigoPix || null,
+                valor: Number(transacao.valor),
+                transacaoId: transacao.id
+            });
+        } catch (error) {
+            if (error.message?.includes('Barbearia não encontrada')) {
+                return res.status(404).json({ erro: error.message });
+            }
+            res.status(500).json({ erro: error.message || 'Erro ao consultar pagamento.' });
         }
     }
 }

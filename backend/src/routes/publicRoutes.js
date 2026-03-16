@@ -6,5 +6,6 @@ const router = express.Router();
 router.get('/loja/:slug/servicos', publicController.listarServicos.bind(publicController));
 router.get('/loja/:slug/horarios', publicController.listarHorariosDisponiveis.bind(publicController));
 router.post('/loja/:slug/agendar', publicController.criarAgendamento.bind(publicController));
+router.get('/loja/:slug/pagamento/:transacaoId', publicController.obterPagamento.bind(publicController));
 
 module.exports = router;

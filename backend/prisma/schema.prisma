@@ -90,13 +90,14 @@ model Transacao {
 }
 
 model PagamentoAssinatura {
-  id         String   @id @default(uuid())
-  tenantId   String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
-  valor      Decimal  @db.Decimal(10, 2)
-  status     String   @default("PENDENTE")
-  codigoPix  String?
-  createdAt  DateTime @default(now())
+  id                    String   @id @default(uuid())
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id])
+  valor                 Decimal  @db.Decimal(10, 2)
+  status                String   @default("PENDENTE")
+  codigoPix             String?
+  mercadoPagoPaymentId  String?  @unique
+  createdAt             DateTime @default(now())
 }
 
 model AuditoriaLog {

@@ -84,37 +84,56 @@ class WebhookController {
                 return res.status(400).json({ erro: "ID do pagamento não informado." });
             }
 
-            const transacao = await prisma.transacao.findUnique({
-                where: { mercadoPagoPaymentId: paymentId },
-                include: { tenant: true }
-            });
-            if (!transacao) {
-                return res.status(200).json({ mensagem: "Transação não encontrada para este pagamento." });
-            }
-
-            const token = transacao.tenant?.mercadoPagoAccessToken?.trim() || process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
-            if (!token) {
+            const tokenMP = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
+            if (!tokenMP) {
                 return res.status(200).json({ mensagem: "Token Mercado Pago não configurado." });
             }
 
-            const status = await obterStatusPagamento(token, paymentId);
+            const status = await obterStatusPagamento(tokenMP, paymentId);
             if (status !== 'approved') {
                 return res.status(200).json({ mensagem: "Pagamento ainda não aprovado.", status });
             }
 
-            await prisma.$transaction(async (tx) => {
-                await tx.transacao.update({
-                    where: { id: transacao.id },
-                    data: { status: 'PAGO' }
-                });
-                await tx.agendamento.update({
-                    where: { id: transacao.agendamentoId },
-                    data: { status: 'CONFIRMADO' }
-                });
+            const transacao = await prisma.transacao.findUnique({
+                where: { mercadoPagoPaymentId: paymentId }
             });
+            if (transacao) {
+                await prisma.$transaction(async (tx) => {
+                    await tx.transacao.update({
+                        where: { id: transacao.id },
+                        data: { status: 'PAGO' }
+                    });
+                    await tx.agendamento.update({
+                        where: { id: transacao.agendamentoId },
+                        data: { status: 'CONFIRMADO' }
+                    });
+                });
+                console.log(`💰 PIX confirmado via Mercado Pago. Transação ${transacao.id} → Agendamento CONFIRMADO.`);
+                return res.json({ recebido: true });
+            }
 
-            console.log(`💰 PIX confirmado via Mercado Pago. Transação ${transacao.id} → Agendamento CONFIRMADO.`);
-            return res.json({ recebido: true });
+            const pagamentoAssinatura = await prisma.pagamentoAssinatura.findUnique({
+                where: { mercadoPagoPaymentId: paymentId },
+                include: { tenant: true }
+            });
+            if (pagamentoAssinatura) {
+                const dataVencimento = new Date();
+                dataVencimento.setDate(dataVencimento.getDate() + 30);
+                await prisma.$transaction(async (tx) => {
+                    await tx.pagamentoAssinatura.update({
+                        where: { id: pagamentoAssinatura.id },
+                        data: { status: 'PAGO' }
+                    });
+                    await tx.tenant.update({
+                        where: { id: pagamentoAssinatura.tenantId },
+                        data: { statusAssinatura: 'ATIVO', dataVencimento }
+                    });
+                });
+                console.log(`📋 Mensalidade paga! Tenant ${pagamentoAssinatura.tenantId} ativo até ${dataVencimento.toISOString().split('T')[0]}.`);
+                return res.json({ recebido: true });
+            }
+
+            return res.status(200).json({ mensagem: "Pagamento não vinculado a agendamento nem assinatura." });
         } catch (error) {
             console.error("Erro no Webhook Mercado Pago:", error);
             return res.status(500).json({ erro: "Falha ao processar webhook Mercado Pago." });

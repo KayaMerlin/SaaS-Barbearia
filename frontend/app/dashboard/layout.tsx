@@ -164,6 +164,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             Configurações
           </Link>
+
+          <Link
+            href="/dashboard/assinatura"
+            onClick={fecharMenu}
+            className={`block px-4 py-3 rounded-lg transition ${
+              isActive("/dashboard/assinatura") ? "bg-white text-gray-900" : "text-gray-200 hover:bg-gray-700/60"
+            }`}
+          >
+            Meu Plano
+          </Link>
         </nav>
       </div>
 

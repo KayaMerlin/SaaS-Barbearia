@@ -14,14 +14,25 @@ export default function AssinaturaPage() {
     codigoPix: string;
     valor: number;
     pagamentoId: string;
+    qrCodeBase64?: string;
   } | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [jaAtivo, setJaAtivo] = useState(false);
+  const [status, setStatus] = useState<{
+    dataVencimento: string | null;
+    statusAssinatura: string;
+    podeAcessarPainel: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const checar = async () => {
       try {
         const res = await api.get("/assinatura/status");
+        setStatus({
+          dataVencimento: res.data.dataVencimento ?? null,
+          statusAssinatura: res.data.statusAssinatura ?? "AGUARDANDO_PAGAMENTO",
+          podeAcessarPainel: res.data.podeAcessarPainel === true,
+        });
         if (res.data.podeAcessarPainel === true) {
           setJaAtivo(true);
           router.replace("/dashboard");
@@ -44,6 +55,7 @@ export default function AssinaturaPage() {
         codigoPix: res.data.codigoPix ?? "",
         valor: Number(res.data.valor) || VALOR_MENSALIDADE,
         pagamentoId: res.data.pagamentoId ?? "",
+        qrCodeBase64: res.data.qrCodeBase64,
       });
     } catch (err) {
       console.error("Erro ao gerar PIX", err);
@@ -51,6 +63,22 @@ export default function AssinaturaPage() {
       setGerandoPix(false);
     }
   };
+
+  const formatarData = (d: string | null) => {
+    if (!d) return null;
+    try {
+      return new Date(d).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    }
+    return d;
+  };
+
+  const vencido = status
+    ? status.dataVencimento && new Date(status.dataVencimento) < new Date()
+    : false;
 
   if (carregandoStatus || jaAtivo) {
     return (
@@ -64,12 +92,24 @@ export default function AssinaturaPage() {
     <div className="flex flex-col max-w-xl mx-auto font-sans">
       <div className="mb-10">
         <h2 className="text-3xl font-black text-slate-950 tracking-tight">
-          Ative sua assinatura
+          Meu Plano
         </h2>
         <p className="text-slate-500 text-sm mt-1">
           Pague a mensalidade de R$ 49,90 via PIX para liberar o painel completo.
         </p>
       </div>
+
+      {vencido && (
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 border-2 border-red-200 text-red-800 font-semibold text-sm">
+          Sua assinatura está vencida. Gere o PIX abaixo para reativar o painel.
+        </div>
+      )}
+
+      {status?.dataVencimento && !vencido && (
+        <p className="text-slate-600 text-sm mb-4">
+          Próximo vencimento: <strong>{formatarData(status.dataVencimento)}</strong>
+        </p>
+      )}
 
       <div className="bg-slate-50 border border-slate-200 rounded-3xl p-8 shadow-sm">
         <p className="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">
@@ -89,10 +129,21 @@ export default function AssinaturaPage() {
             disabled={gerandoPix}
             className="w-full py-4 rounded-xl font-bold text-base bg-slate-950 text-white hover:bg-black transition shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {gerandoPix ? "Gerando PIX..." : "Gerar PIX Copia e Cola"}
+            {gerandoPix ? "Gerando PIX..." : "Gerar PIX da Mensalidade"}
           </button>
         ) : (
           <>
+            {dadosPix.qrCodeBase64 && (
+              <div className="flex justify-center mb-4">
+                <img
+                  src={`data:image/png;base64,${dadosPix.qrCodeBase64}`}
+                  alt="QR Code PIX"
+                  width={200}
+                  height={200}
+                  className="rounded-xl border border-slate-200"
+                />
+              </div>
+            )}
             <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between gap-3 mb-4">
               <span className="text-xs text-slate-400 font-mono truncate select-all break-all">
                 {dadosPix.codigoPix}
@@ -112,25 +163,6 @@ export default function AssinaturaPage() {
               }`}
             >
               {copiado ? "✓ Código copiado!" : "Copiar código PIX"}
-            </button>
-
-            <button
-              type="button"
-              onClick={async () => {
-                if (!dadosPix?.pagamentoId) return;
-                try {
-                  await api.post("/webhook/assinatura", {
-                    pagamentoId: dadosPix.pagamentoId,
-                    statusPagamento: "PAGO",
-                  });
-                  alert("Webhook disparado. Clique em \"Já paguei\" para liberar o painel.");
-                } catch {
-                  alert("Erro ao simular webhook.");
-                }
-              }}
-              className="w-full mt-4 py-3 rounded-xl font-bold text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 transition border border-purple-200 border-dashed"
-            >
-              Simular pagamento (modo teste)
             </button>
 
             <p className="text-xs text-slate-500 mt-4 text-center">
@@ -153,6 +185,11 @@ export default function AssinaturaPage() {
         onClick={async () => {
           try {
             const res = await api.get("/assinatura/status");
+            setStatus({
+              dataVencimento: res.data.dataVencimento ?? null,
+              statusAssinatura: res.data.statusAssinatura ?? "AGUARDANDO_PAGAMENTO",
+              podeAcessarPainel: res.data.podeAcessarPainel === true,
+            });
             if (res.data.podeAcessarPainel) router.replace("/dashboard");
           } catch {
           }

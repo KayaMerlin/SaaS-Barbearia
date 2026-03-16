@@ -4,7 +4,7 @@ const servicoSchema = z.object({
     nome: z.string()
         .min(2, { message: 'Nome do serviço deve ter pelo menos 2 caracteres' })
         .max(100, { message: 'Nome do serviço deve ter no máximo 100 caracteres' })
-        .regex(/^[A-Za-zÀ-ÿ0-9\s'-]+$/, { message: 'Nome do serviço não pode conter caracteres especiais bizarros.' }),
+        .regex(/^[a-zA-ZÀ-ÿ0-9\s\-\(\)\/\+\.,&']+$/, { message: 'Nome do serviço contém caracteres inválidos. Use letras, números, espaços, hífen, parênteses, barra, + , . &' }),
         
     preco: z.number()
         .positive({ message: 'Preço do serviço deve ser maior que zero' })
