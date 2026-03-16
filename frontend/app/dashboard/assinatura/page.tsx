@@ -64,7 +64,7 @@ export default function AssinaturaPage() {
     }
   };
 
-  const formatarData = (d: string | null) => {
+  const formatarData = (d: string | null): string | null => {
     if (!d) return null;
     try {
       return new Date(d).toLocaleDateString("pt-BR", {
@@ -72,8 +72,9 @@ export default function AssinaturaPage() {
         month: "short",
         year: "numeric",
       });
+    } catch {
+      return d;
     }
-    return d;
   };
 
   const vencido = status
