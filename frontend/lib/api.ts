@@ -31,6 +31,12 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
     }
+    if (error.response?.status === 403 && error.response?.data?.codigo === "NAO_ADMIN") {
+      if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
+        window.location.href = "/dashboard";
+        return Promise.reject(error);
+      }
+    }
     return Promise.reject(error);
   }
 );

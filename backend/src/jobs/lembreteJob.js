@@ -29,15 +29,15 @@ async function runLembreteJob() {
       const mensagem = `Olá ${ag.cliente.nome}! ✂️ Lembrete: seu horário de *${ag.servico.nome}* na *${ag.tenant.nome}* hoje às *${horaFormatada}*. Te esperamos!`;
 
       if (url && token) {
-        let num = String(ag.cliente.telefone).replace(/\D/g, '');
-        if (num.length === 10 || num.length === 11) num = '55' + num;
+        const telefoneLimpo = String(ag.cliente.telefone).replace(/\D/g, '');
+        const numeroFinal = telefoneLimpo.startsWith('55') ? telefoneLimpo : '55' + telefoneLimpo;
         await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'apikey': token
           },
-          body: JSON.stringify({ number: num, message: mensagem })
+          body: JSON.stringify({ number: numeroFinal, text: mensagem })
         });
       }
 

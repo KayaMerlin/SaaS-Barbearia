@@ -31,6 +31,7 @@ model User {
   nome     String
   email    String @unique
   senha    String
+  role     String @default("USER")
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id])
 }

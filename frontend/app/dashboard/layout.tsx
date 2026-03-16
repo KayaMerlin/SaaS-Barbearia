@@ -17,12 +17,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [statusAssinatura, setStatusAssinatura] = useState<string | null>(null);
   const [dataVencimento, setDataVencimento] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { usuario, setUsuario, logout } = useAuthStore();
 
   const fecharMenu = () => setMenuAberto(false);
 
   useEffect(() => {
     setMontado(true);
+    try {
+      const u = localStorage.getItem("barbersaas_usuario");
+      setIsAdmin(u ? JSON.parse(u).role === "ADMIN" : false);
+    } catch {
+      setIsAdmin(false);
+    }
     const token = localStorage.getItem("barbersaas_token");
     if (!token) {
       router.replace("/login");
@@ -197,6 +204,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             Meu Plano
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={fecharMenu}
+              className="block px-4 py-3 rounded-lg transition text-amber-300 hover:bg-amber-500/20"
+            >
+              Admin
+            </Link>
+          )}
         </nav>
       </div>
 

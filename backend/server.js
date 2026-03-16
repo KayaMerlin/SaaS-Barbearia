@@ -14,6 +14,7 @@ const configuracaoRoutes = require('./src/routes/configuracaoRoutes');
 const webhookRoutes = require('./src/routes/webhookRoutes');
 const financeiroRoutes = require('./src/routes/financeiroRoutes');
 const assinaturaRoutes = require('./src/routes/assinaturaRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 const app = express();
 const porta = process.env.PORT || 4000;
@@ -49,6 +50,7 @@ app.use('/configuracoes', configuracaoRoutes);
 app.use('/webhook', webhookRoutes);
 app.use('/financeiro', financeiroRoutes);
 app.use('/assinatura', assinaturaRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.json({

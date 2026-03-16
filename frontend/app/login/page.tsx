@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
+import { api } from "@/lib/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,24 +20,17 @@ export default function Login() {
     setCarregando(true);
 
     try {
-      const resposta = await fetch("https://saa-s-barbearia-tau.vercel.app/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, senha }),
-      });
-
-      const dados = await resposta.json();
-
-      if (!resposta.ok) {
-        throw new Error(dados.erro || dados.mensagem || "Erro ao fazer login");
-      }
+      const resposta = await api.post("/login", { email, senha });
+      const dados = resposta.data;
 
       localStorage.setItem("barbersaas_token", dados.token);
-      router.push("/dashboard");
-    } catch (error: any) {
-      setErro(error.message);
+      if (dados.usuario) {
+        localStorage.setItem("barbersaas_usuario", JSON.stringify(dados.usuario));
+      }
+      router.push(dados.usuario?.role === "ADMIN" ? "/admin" : "/dashboard");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { erro?: string } }; message?: string };
+      setErro(err.response?.data?.erro || err.message || "Erro ao fazer login");
     } finally {
       setCarregando(false);
     }
