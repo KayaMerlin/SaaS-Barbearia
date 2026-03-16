@@ -12,6 +12,8 @@ export default function ConfiguracoesPage() {
   const [nomeBarbearia, setNomeBarbearia] = useState("");
   const [horarioAbertura, setHorarioAbertura] = useState("09:00");
   const [horarioFechamento, setHorarioFechamento] = useState("18:00");
+  const [aceitaPix, setAceitaPix] = useState(false);
+  const [aceitaDinheiro, setAceitaDinheiro] = useState(true);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<{
@@ -33,6 +35,8 @@ export default function ConfiguracoesPage() {
         if (resposta.data.horarioAbertura) setHorarioAbertura(resposta.data.horarioAbertura);
         if (resposta.data.horarioFechamento) setHorarioFechamento(resposta.data.horarioFechamento);
         setHasMercadoPago(Boolean(resposta.data.hasMercadoPago));
+        setAceitaPix(Boolean(resposta.data.aceitaPix));
+        setAceitaDinheiro(resposta.data.aceitaDinheiro !== false);
       } catch (error) {
         console.error("Erro ao carregar dados", error);
         setMensagem({ tipo: "erro", texto: "Falha ao carregar configurações." });
@@ -97,6 +101,8 @@ export default function ConfiguracoesPage() {
         horarioAbertura,
         horarioFechamento,
         mercadoPagoAccessToken: mercadoPagoAccessToken.trim() || undefined,
+        aceitaPix,
+        aceitaDinheiro,
       });
       if (mercadoPagoAccessToken.trim()) setHasMercadoPago(true);
       setMercadoPagoAccessToken("");
@@ -220,22 +226,49 @@ export default function ConfiguracoesPage() {
               Mercado Pago conectado. Para alterar, insira um novo token abaixo e salve.
             </p>
           )}
-          <div className="max-w-xl">
-            <label
-              htmlFor="mercadoPagoToken"
-              className="block text-sm font-bold text-slate-700 mb-2"
-            >
-              Access Token do Mercado Pago
-            </label>
-            <input
-              id="mercadoPagoToken"
-              type="password"
-              value={mercadoPagoAccessToken}
-              onChange={(e) => setMercadoPagoAccessToken(e.target.value)}
-              placeholder={hasMercadoPago ? "Deixe em branco para manter o atual" : "Cole seu token de produção ou teste (Credenciais no painel MP)"}
-              className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium text-base shadow-inner bg-slate-50"
-              autoComplete="off"
-            />
+          <div className="space-y-6">
+            <div className="max-w-xl">
+              <label
+                htmlFor="mercadoPagoToken"
+                className="block text-sm font-bold text-slate-700 mb-2"
+              >
+                Access Token do Mercado Pago
+              </label>
+              <input
+                id="mercadoPagoToken"
+                type="password"
+                value={mercadoPagoAccessToken}
+                onChange={(e) => setMercadoPagoAccessToken(e.target.value)}
+                placeholder={hasMercadoPago ? "Deixe em branco para manter o atual" : "Cole seu token de produção ou teste (Credenciais no painel MP)"}
+                className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium text-base shadow-inner bg-slate-50"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={aceitaPix}
+                  onChange={(e) => setAceitaPix(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-slate-800">
+                  Aceitar pagamento online via PIX
+                </span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={aceitaDinheiro}
+                  onChange={(e) => setAceitaDinheiro(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-slate-800">
+                  Aceitar pagamento no local (dinheiro/cartão)
+                </span>
+              </label>
+            </div>
           </div>
         </div>
 

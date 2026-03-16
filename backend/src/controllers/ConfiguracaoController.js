@@ -8,7 +8,7 @@ class ConfiguracaoController {
                 return res.status(401).json({ erro: 'Token inválido ou sem tenant.' });
             }
 
-            const { logoUrl, nomeBarbearia, horarioAbertura, horarioFechamento, mercadoPagoAccessToken } = req.body;
+            const { logoUrl, nomeBarbearia, horarioAbertura, horarioFechamento, mercadoPagoAccessToken, aceitaPix, aceitaDinheiro } = req.body;
             const data = {};
             if (logoUrl !== undefined) data.logoUrl = logoUrl || null;
             if (nomeBarbearia !== undefined) {
@@ -23,9 +23,11 @@ class ConfiguracaoController {
             if (horarioAbertura !== undefined) data.horarioAbertura = horarioAbertura || '09:00';
             if (horarioFechamento !== undefined) data.horarioFechamento = horarioFechamento || '18:00';
             if (mercadoPagoAccessToken !== undefined) data.mercadoPagoAccessToken = mercadoPagoAccessToken ? String(mercadoPagoAccessToken).trim() : null;
+            if (aceitaPix !== undefined) data.aceitaPix = Boolean(aceitaPix);
+            if (aceitaDinheiro !== undefined) data.aceitaDinheiro = Boolean(aceitaDinheiro);
 
             if (Object.keys(data).length === 0) {
-                return res.status(400).json({ erro: 'Envie ao menos um campo para atualizar (logoUrl, nomeBarbearia, horarioAbertura, horarioFechamento ou mercadoPagoAccessToken).' });
+                return res.status(400).json({ erro: 'Envie ao menos um campo para atualizar.' });
             }
 
             const tenantAtualizado = await prisma.tenant.update({
