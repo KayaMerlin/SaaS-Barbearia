@@ -22,7 +22,10 @@ const porta = process.env.PORT || 4000;
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
-  process.env.FRONTEND_URL
+  // Frontend em produção na Vercel
+  'https://saa-s-barbearia-4ctt.vercel.app',
+  // Opcionalmente usar FRONTEND_URL via env
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 const uniqueOrigins = [...new Set(allowedOrigins)];
 app.use(cors({
