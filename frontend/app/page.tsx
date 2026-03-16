@@ -45,19 +45,24 @@ export default function Home() {
                 Gerencie seus clientes, horários e faturamento em um só lugar. A
                 plataforma definitiva para barbeiros modernos.
               </p>
-              <div className="mt-10 flex flex-col sm:flex-row gap-4">
-                <Link
-                  href="/cadastro"
-                  className="px-8 py-4 bg-black text-white rounded-xl font-bold hover:bg-slate-800 transition-all text-center"
-                >
-                  Comece agora por R$ 49,90
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-8 py-4 border-2 border-slate-200 rounded-xl font-bold hover:bg-slate-50 transition-all text-center"
-                >
-                  Já é cadastrado? Login
-                </Link>
+              <div className="mt-10 flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link
+                    href="/cadastro"
+                    className="px-8 py-4 bg-black text-white rounded-xl font-bold hover:bg-slate-800 transition-all text-center"
+                  >
+                    Experimente grátis por 7 dias
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="px-8 py-4 border-2 border-slate-200 rounded-xl font-bold hover:bg-slate-50 transition-all text-center"
+                  >
+                    Já é cadastrado? Login
+                  </Link>
+                </div>
+                <p className="text-sm text-slate-500">
+                  ✨ Sem compromisso. Não precisa de cartão de crédito. Cancele quando quiser.
+                </p>
               </div>
             </div>
             <div className="relative flex justify-center">
@@ -165,9 +170,12 @@ export default function Home() {
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
                 Pronto para transformar sua barbearia?
               </h2>
-              <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
+              <p className="text-blue-100 text-lg mb-4 max-w-2xl mx-auto">
                 Junte-se a centenas de barbeiros que já digitalizaram seus
                 negócios. Suporte prioritário e configuração rápida.
+              </p>
+              <p className="text-blue-200 text-sm mb-10">
+                7 dias grátis. Depois, R$ 49,90/mês. Cancele quando quiser.
               </p>
               <a
                 href="https://wa.me/5571982839538"

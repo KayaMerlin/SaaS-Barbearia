@@ -49,10 +49,10 @@ export default function CadastroPage() {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
-            Crie sua barbearia
+            Começar meu teste gratuito
           </h2>
           <p className="text-gray-500">
-            Comece por R$ 49,90/mês. Preencha os dados abaixo.
+            Teste grátis por 7 dias. Acesso total liberado. Preencha os dados abaixo.
           </p>
         </div>
 
@@ -127,8 +127,11 @@ export default function CadastroPage() {
             disabled={carregando}
             className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-800 transition disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {carregando ? "Criando conta..." : "Comece agora por R$ 49,90"}
+            {carregando ? "Criando conta..." : "Começar meu teste gratuito"}
           </button>
+          <p className="text-xs text-gray-400 text-center">
+            Não precisa de cartão de crédito. Após o teste, R$ 49,90/mês.
+          </p>
         </form>
 
         <p className="mt-8 text-center text-sm text-gray-500">
