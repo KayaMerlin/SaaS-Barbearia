@@ -14,8 +14,7 @@ type ToggleProps = {
 
 function Toggle({ checked, onChange, label }: ToggleProps) {
   return (
-    <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
-      <span className="text-sm font-medium text-slate-800">{label}</span>
+    <label className="flex items-center gap-3 cursor-pointer select-none">
       <div className="relative inline-flex items-center">
         <input
           type="checkbox"
@@ -23,14 +22,10 @@ function Toggle({ checked, onChange, label }: ToggleProps) {
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
         />
-        <span
-          className="w-12 h-7 flex items-center flex-shrink-0 rounded-full p-1 bg-slate-300 transition-colors duration-300 ease-in-out peer-checked:bg-blue-600"
-        >
-          <span
-            className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out peer-checked:translate-x-5"
-          />
-        </span>
+        <div className="w-11 h-6 bg-slate-300 rounded-full peer-checked:bg-blue-600 transition-colors duration-300 ease-in-out" />
+        <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow-md transition-transform duration-300 ease-in-out peer-checked:translate-x-5" />
       </div>
+      <span className="text-sm font-medium text-slate-800">{label}</span>
     </label>
   );
 }
