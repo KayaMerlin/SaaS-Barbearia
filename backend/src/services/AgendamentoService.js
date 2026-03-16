@@ -103,6 +103,54 @@ class AgendamentoService {
 
         return agendamentoAtualizado;
     }
+
+    async resumoSemana(tenantId) {
+        const hoje = new Date();
+        const inicioSemana = new Date(hoje);
+        inicioSemana.setDate(hoje.getDate() - 6);
+        inicioSemana.setHours(0, 0, 0, 0);
+        const fimSemana = new Date(hoje);
+        fimSemana.setHours(23, 59, 59, 999);
+
+        const agendamentos = await prisma.agendamento.findMany({
+            where: {
+                tenantId,
+                dataHora: { gte: inicioSemana, lte: fimSemana },
+                status: { in: ['CONFIRMADO', 'CONCLUIDO'] }
+            },
+            include: { servico: true },
+            orderBy: { dataHora: 'asc' }
+        });
+
+        const toDataISO = (date) => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+        const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const porDia = {};
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(inicioSemana);
+            d.setDate(inicioSemana.getDate() + i);
+            const dataISO = toDataISO(d);
+            const diaNum = d.getDate();
+            const diaNome = diasSemana[d.getDay()];
+            porDia[dataISO] = { dia: `${diaNome} ${diaNum}`, cortes: 0, receita: 0 };
+        }
+
+        for (const ag of agendamentos) {
+            const dataISO = toDataISO(new Date(ag.dataHora));
+            if (!porDia[dataISO]) continue;
+            porDia[dataISO].cortes += 1;
+            const preco = Number(ag.servico?.preco ?? 0);
+            porDia[dataISO].receita += preco;
+        }
+
+        return Object.keys(porDia)
+            .sort()
+            .map((dataISO) => ({ ...porDia[dataISO], dataISO }));
+    }
 }
 
 module.exports = new AgendamentoService();

@@ -144,12 +144,14 @@ export default function AgendamentoPublico() {
     );
   }
 
+  const voltarPasso = () => setPasso((p) => Math.max(1, p - 1));
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-50 flex justify-center font-sans p-0 sm:p-4 md:p-8">
-      <div className="w-full max-w-4xl bg-white shadow-2xl rounded-none sm:rounded-3xl border border-slate-100 flex flex-col md:flex-row overflow-hidden relative min-h-screen md:min-h-0">
-        <div className="md:w-1/3 bg-slate-950 text-white p-6 md:p-10 flex md:flex-col items-center md:items-start md:justify-start gap-4 md:gap-8 border-b md:border-b-0 md:border-r border-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-50 flex justify-center font-sans p-0 sm:p-4 md:p-6 lg:p-8">
+      <div className="w-full max-w-5xl bg-white shadow-2xl rounded-none sm:rounded-3xl border border-slate-100 flex flex-col md:flex-row overflow-hidden relative min-h-screen md:min-h-0">
+        <aside className="w-full md:w-72 lg:w-80 flex-shrink-0 bg-slate-950 text-white p-6 lg:p-8 flex md:flex-col items-center md:items-start justify-center md:justify-start gap-4 border-b md:border-b-0 md:border-r border-slate-800">
           <div className="flex md:flex-col items-center md:items-start gap-4">
-            <div className="w-16 h-16 md:w-24 md:h-24 rounded-full border-4 border-slate-700 overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-2xl md:text-3xl shadow-xl flex-shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full border-4 border-slate-700 overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-2xl shadow-xl flex-shrink-0">
               {barbearia.logoUrl ? (
                 <img src={barbearia.logoUrl} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -157,7 +159,7 @@ export default function AgendamentoPublico() {
               )}
             </div>
             <div>
-              <h1 className="text-xl md:text-3xl font-black tracking-tighter text-white leading-tight">
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-black tracking-tighter text-white leading-tight">
                 {barbearia.nome}
               </h1>
               <p className="text-blue-400 text-xs md:text-sm flex items-center gap-1 mt-1 font-medium">
@@ -165,91 +167,95 @@ export default function AgendamentoPublico() {
               </p>
             </div>
           </div>
-        </div>
+        </aside>
 
-        <div className="flex-1 p-6 md:p-12 overflow-y-auto pb-32 md:pb-12">
-          {passo === 1 && (
-            <ListaServicos
-              servicos={servicosReais}
-              servicoEscolhido={servicoEscolhido}
-              onSelect={setServicoEscolhido}
-              carregando={carregandoServicos}
-              erro={erro}
-            />
-          )}
-          {passo === 2 && (
-            <CalendarioHorarios
-              dataEscolhida={dataEscolhida}
-              onDataChange={setDataEscolhida}
-              servicoEscolhido={servicoEscolhido}
-              horariosDisponiveis={horariosDisponiveis}
-              carregandoHorarios={carregandoHorarios}
-              horaEscolhida={horaEscolhida}
-              onHoraSelect={setHoraEscolhida}
-              erro={erro}
-            />
-          )}
-          {passo === 3 && (
-            <FormResumo
-              nome={nome}
-              setNome={setNome}
-              telefone={telefone}
-              setTelefone={setTelefone}
-              servicoEscolhido={servicoEscolhido}
-              dataEscolhida={dataEscolhida}
-              horaEscolhida={horaEscolhida}
-              erro={erro}
-              onSubmit={handleFinalizar}
-              salvando={salvando}
-            />
-          )}
-        </div>
-
-        {passo < 4 && (
-          <div className="absolute bottom-0 left-0 right-0 p-5 bg-white border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-20 md:relative md:flex md:flex-col md:w-60 md:min-w-[240px] md:border-l md:border-slate-100 md:bg-slate-50 md:shadow-none md:justify-end md:p-8">
-            <div className="flex gap-4 md:flex-col md:gap-4">
-              {passo > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setPasso(passo - 1)}
-                  className="px-6 py-4 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition md:w-full"
-                >
-                  Voltar
-                </button>
-              )}
-              {passo === 1 && (
-                <button
-                  type="button"
-                  disabled={!servicoEscolhido}
-                  onClick={() => setPasso(2)}
-                  className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition shadow-md shadow-blue-600/20 md:w-full"
-                >
-                  Continuar
-                </button>
-              )}
-              {passo === 2 && (
-                <button
-                  type="button"
-                  disabled={!dataEscolhida || !horaEscolhida}
-                  onClick={() => setPasso(3)}
-                  className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition shadow-md shadow-blue-600/20 md:w-full"
-                >
-                  Confirmar horário
-                </button>
-              )}
-              {passo === 3 && (
-                <button
-                  type="submit"
-                  form="form-agendamento"
-                  disabled={salvando}
-                  className="flex-1 bg-green-500 text-white font-black py-4 rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-500/20 text-lg disabled:opacity-70 md:w-full md:text-xl"
-                >
-                  {salvando ? "Aguarde..." : "Agendar agora"}
-                </button>
-              )}
-            </div>
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex-1 p-6 md:p-8 lg:p-10 overflow-y-auto pb-28 md:pb-10 max-w-2xl w-full">
+            {passo === 1 && (
+              <ListaServicos
+                servicos={servicosReais}
+                servicoEscolhido={servicoEscolhido}
+                onSelect={setServicoEscolhido}
+                carregando={carregandoServicos}
+                erro={erro}
+              />
+            )}
+            {passo === 2 && (
+              <CalendarioHorarios
+                dataEscolhida={dataEscolhida}
+                onDataChange={setDataEscolhida}
+                servicoEscolhido={servicoEscolhido}
+                horariosDisponiveis={horariosDisponiveis}
+                carregandoHorarios={carregandoHorarios}
+                horaEscolhida={horaEscolhida}
+                onHoraSelect={setHoraEscolhida}
+                erro={erro}
+                onVoltar={voltarPasso}
+              />
+            )}
+            {passo === 3 && (
+              <FormResumo
+                nome={nome}
+                setNome={setNome}
+                telefone={telefone}
+                setTelefone={setTelefone}
+                servicoEscolhido={servicoEscolhido}
+                dataEscolhida={dataEscolhida}
+                horaEscolhida={horaEscolhida}
+                erro={erro}
+                onSubmit={handleFinalizar}
+                salvando={salvando}
+                onVoltar={voltarPasso}
+              />
+            )}
           </div>
-        )}
+
+          {passo < 4 && (
+            <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 bg-white border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-20 md:relative md:flex md:flex-col md:border-t md:border-slate-100 md:px-8 md:pb-8 md:pt-6">
+              <div className="flex gap-3 md:gap-4 md:max-w-2xl">
+                {passo > 1 && (
+                  <button
+                    type="button"
+                    onClick={voltarPasso}
+                    className="px-5 py-3.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex-1 md:flex-initial md:min-w-[120px]"
+                  >
+                    Voltar
+                  </button>
+                )}
+                {passo === 1 && (
+                  <button
+                    type="button"
+                    disabled={!servicoEscolhido}
+                    onClick={() => setPasso(2)}
+                    className="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition shadow-md shadow-blue-600/20"
+                  >
+                    Continuar
+                  </button>
+                )}
+                {passo === 2 && (
+                  <button
+                    type="button"
+                    disabled={!dataEscolhida || !horaEscolhida}
+                    onClick={() => setPasso(3)}
+                    className="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition shadow-md shadow-blue-600/20"
+                  >
+                    Confirmar horário
+                  </button>
+                )}
+                {passo === 3 && (
+                  <button
+                    type="submit"
+                    form="form-agendamento"
+                    disabled={salvando}
+                    className="flex-1 bg-green-500 text-white font-black py-3.5 rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-500/20 text-base disabled:opacity-70"
+                  >
+                    {salvando ? "Aguarde..." : "Agendar agora"}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

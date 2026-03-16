@@ -134,8 +134,13 @@ export default function AssinaturaPage() {
       )}
 
       {vencido && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-50 border-2 border-red-200 text-red-800 font-semibold text-sm">
-          Sua assinatura está vencida. Gere o PIX abaixo para reativar o painel.
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 border-2 border-red-200 text-red-800 font-semibold text-sm space-y-2">
+          <p>Sua assinatura está vencida. Gere o PIX abaixo para reativar o painel.</p>
+          {status?.statusAssinatura === "TRIAL" && (
+            <p className="font-normal text-red-700">
+              Seu período de teste acabou. Esperamos que tenha gostado! Para continuar usando e não perder seus agendamentos, escolha seu plano abaixo.
+            </p>
+          )}
         </div>
       )}
 

@@ -48,6 +48,16 @@ class AgendamentoController {
             res.status(400).json({ erro: error.message });
         }
     }
+
+    async resumoSemana(req, res) {
+        try {
+            const tenantId = req.usuario.tenantId;
+            const dados = await agendamentoService.resumoSemana(tenantId);
+            res.json(dados);
+        } catch (error) {
+            res.status(500).json({ erro: error.message });
+        }
+    }
 }
 
 module.exports = new AgendamentoController();

@@ -14,12 +14,15 @@ function slugify(text) {
 class BarbeariaService {
     async criarBarbearia(nomeBarbearia, nomeUsuario, email, senha) {
         const senhaHash = await bcrypt.hash(senha, 10);
+        const dataTesteGratis = new Date();
+        dataTesteGratis.setDate(dataTesteGratis.getDate() + 7);
 
         const novaBarbearia = await prisma.tenant.create({
             data: {
                 nome: nomeBarbearia,
                 ativo: true,
-                createdAt: new Date(),
+                statusAssinatura: 'TRIAL',
+                dataVencimento: dataTesteGratis,
                 users: {
                     create: {
                         nome: nomeUsuario,

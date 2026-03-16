@@ -15,6 +15,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [montado, setMontado] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
+  const [statusAssinatura, setStatusAssinatura] = useState<string | null>(null);
+  const [dataVencimento, setDataVencimento] = useState<string | null>(null);
   const { usuario, setUsuario, logout } = useAuthStore();
 
   const fecharMenu = () => setMenuAberto(false);
@@ -44,6 +46,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           });
         });
     }
+    api.get("/assinatura/status").then((res) => {
+      setStatusAssinatura(res.data.statusAssinatura ?? null);
+      setDataVencimento(res.data.dataVencimento ?? null);
+    }).catch(() => {});
   }, [router, usuario, setUsuario]);
 
   useEffect(() => {
@@ -53,6 +59,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const verificarAssinatura = async () => {
       try {
         const res = await api.get("/assinatura/status");
+        setStatusAssinatura(res.data.statusAssinatura ?? null);
+        setDataVencimento(res.data.dataVencimento ?? null);
         if (res.data.podeAcessarPainel === false) {
           router.replace("/dashboard/assinatura");
         }
@@ -61,6 +69,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     };
     verificarAssinatura();
   }, [montado, pathname, router]);
+
+  const diasRestantesTrial = dataVencimento && statusAssinatura === "TRIAL"
+    ? Math.max(0, Math.ceil((new Date(dataVencimento).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const mostrarBannerTrial = statusAssinatura === "TRIAL" && pathname !== "/dashboard/assinatura" && diasRestantesTrial > 0;
 
   const handleLogout = () => {
     logout();
@@ -98,8 +111,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               {nomeExibicao}
             </p>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 uppercase inline-block mt-0.5">
-              {usuario?.statusAssinatura === "ATIVO" ? "PRO" : "FREE"}
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase inline-block mt-0.5 ${
+              usuario?.statusAssinatura === "ATIVO"
+                ? "bg-blue-100 text-blue-700"
+                : usuario?.statusAssinatura === "TRIAL"
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-gray-200 text-gray-600"
+            }`}>
+              {usuario?.statusAssinatura === "ATIVO"
+                ? "PRO"
+                : usuario?.statusAssinatura === "TRIAL"
+                  ? "TESTE"
+                  : "FREE"}
             </span>
           </div>
         </div>
@@ -222,8 +245,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <ConteudoSidebar />
       </aside>
 
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0">
-        <div className="bg-white rounded-2xl md:rounded-[32px] shadow-lg min-h-full p-4 md:p-8">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto min-w-0 flex flex-col">
+        {mostrarBannerTrial && (
+          <div className="mb-4 py-3 px-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium flex items-center gap-2">
+            <span aria-hidden>🎁</span>
+            Você está no Período de Teste Grátis. Aproveite todas as funções por mais {diasRestantesTrial} {diasRestantesTrial === 1 ? "dia" : "dias"}!
+          </div>
+        )}
+        <div className="bg-white rounded-2xl md:rounded-[32px] shadow-lg min-h-full p-4 md:p-8 flex-1">
           {children}
         </div>
       </main>

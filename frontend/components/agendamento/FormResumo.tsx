@@ -13,6 +13,7 @@ interface FormResumoProps {
   erro: string;
   onSubmit: (e: React.FormEvent) => void;
   salvando: boolean;
+  onVoltar?: () => void;
 }
 
 export default function FormResumo({
@@ -26,9 +27,19 @@ export default function FormResumo({
   erro,
   onSubmit,
   salvando,
+  onVoltar,
 }: FormResumoProps) {
   return (
     <div className="animate-in slide-in-from-right-4 duration-300 flex flex-col">
+      {onVoltar && (
+        <button
+          type="button"
+          onClick={onVoltar}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-700 font-medium text-sm mb-6 transition"
+        >
+          <span aria-hidden>←</span> Voltar
+        </button>
+      )}
       <h2 className="text-2xl md:text-3xl font-black text-slate-950 tracking-tight mb-2">
         Tudo pronto!
       </h2>
@@ -76,24 +87,26 @@ export default function FormResumo({
           </div>
         </div>
 
-        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner md:mt-1 h-fit">
+        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 shadow-inner md:mt-0 overflow-hidden">
           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
             Resumo do pedido
           </h4>
           <p className="text-lg font-bold text-slate-950 mb-1">
             {servicoEscolhido?.nome}
           </p>
-          <p className="text-sm text-slate-600 mb-3">
+          <p className="text-sm text-slate-600 mb-4">
             {dataEscolhida?.split("-").reverse().join("/")} às {horaEscolhida}
           </p>
-          <div className="border-t border-slate-200 my-4" />
-          <p className="font-black text-blue-700 text-3xl">
-            {servicoEscolhido &&
-              new Intl.NumberFormat("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              }).format(parseFloat(servicoEscolhido.preco))}
-          </p>
+          <div className="border-t border-slate-200 pt-4">
+            <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Total</p>
+            <p className="font-black text-blue-700 text-2xl md:text-3xl">
+              {servicoEscolhido &&
+                new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(parseFloat(servicoEscolhido.preco))}
+            </p>
+          </div>
         </div>
       </form>
     </div>

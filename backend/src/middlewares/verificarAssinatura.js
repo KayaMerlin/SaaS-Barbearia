@@ -17,7 +17,7 @@ async function verificarAssinaturaAtiva(req, res, next) {
 
         const statusAssinatura = tenant.statusAssinatura ?? 'AGUARDANDO_PAGAMENTO';
         const dataVencimento = tenant.dataVencimento ?? null;
-        const estaAtivo = statusAssinatura === 'ATIVO';
+        const estaAtivo = statusAssinatura === 'ATIVO' || statusAssinatura === 'TRIAL';
         const vencimentoOk = !dataVencimento || new Date(dataVencimento) >= new Date();
 
         if (estaAtivo && vencimentoOk) {

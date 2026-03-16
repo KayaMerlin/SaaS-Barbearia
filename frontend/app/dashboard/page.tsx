@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { api } from "@/lib/api";
 
 type Agendamento = {
   id: string;
@@ -19,30 +20,39 @@ type Agendamento = {
   cliente: { nome: string; telefone: string };
 };
 
+type ResumoSemanaItem = { dia: string; cortes: number; receita: number; dataISO: string };
+
+const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+function gerarSeteDiasZerados(): ResumoSemanaItem[] {
+  const hoje = new Date();
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() - 6 + i);
+    const diaNum = d.getDate();
+    const diaNome = DIAS_SEMANA[d.getDay()];
+    return { dia: `${diaNome} ${diaNum}`, cortes: 0, receita: 0, dataISO: d.toISOString().split("T")[0] };
+  });
+}
+
 export default function DashboardHome() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [dadosGrafico, setDadosGrafico] = useState<ResumoSemanaItem[]>(() => gerarSeteDiasZerados());
   const [carregando, setCarregando] = useState(true);
+
+  const dataHoje = new Date().toISOString().split("T")[0];
 
   const carregarAgenda = async () => {
     try {
-      const token = localStorage.getItem("barbersaas_token");
-      const dataHoje = new Date().toISOString().split("T")[0];
-
-      const resposta = await fetch(
-        `https://saa-s-barbearia-tau.vercel.app/agendamentos?data=${dataHoje}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (resposta.ok) {
-        const dados = await resposta.json();
-        setAgendamentos(dados);
-      }
+      const [resAgenda, resResumo] = await Promise.all([
+        api.get<Agendamento[]>(`/agendamentos?data=${dataHoje}`),
+        api.get<ResumoSemanaItem[]>("/agendamentos/resumo-semana"),
+      ]);
+      setAgendamentos(resAgenda.data ?? []);
+      const resumo = Array.isArray(resResumo.data) ? resResumo.data : [];
+      setDadosGrafico(resumo.length > 0 ? resumo : gerarSeteDiasZerados());
     } catch (error) {
-      console.error("Erro ao buscar agenda:", error);
+      console.error("Erro ao buscar dados:", error);
     } finally {
       setCarregando(false);
     }
@@ -53,23 +63,9 @@ export default function DashboardHome() {
   }, []);
 
   const atualizarStatus = async (id: string, novoStatus: string) => {
-    const token = localStorage.getItem("barbersaas_token");
     try {
-      const resposta = await fetch(
-        `https://saa-s-barbearia-tau.vercel.app/agendamentos/${id}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status: novoStatus }),
-        }
-      );
-
-      if (resposta.ok) {
-        carregarAgenda();
-      }
+      await api.patch(`/agendamentos/${id}/status`, { status: novoStatus });
+      carregarAgenda();
     } catch (error) {
       console.error("Erro ao atualizar:", error);
     }
@@ -87,14 +83,6 @@ export default function DashboardHome() {
   const receitaEstimada = agendamentosValidos.reduce((total, agendamento) => {
     return total + parseFloat(agendamento.servico.preco);
   }, 0);
-
-  const dadosGrafico = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((hora) => {
-    const cortesNaHora = agendamentosValidos.filter((a) => {
-      const horaDoCorte = new Date(a.dataHora).getHours();
-      return horaDoCorte === hora;
-    }).length;
-    return { hora: `${hora}h`, cortes: cortesNaHora };
-  });
 
   if (carregando)
     return (
@@ -151,9 +139,9 @@ export default function DashboardHome() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[400px]">
         <div className="lg:col-span-2 bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-gray-900">Fluxo de Clientes</h3>
+            <h3 className="font-bold text-gray-900">Fluxo da semana</h3>
             <span className="text-xs text-gray-400 font-medium">
-              Atualizado agora
+              Cortes confirmados (últimos 7 dias)
             </span>
           </div>
           <div className="w-full h-[350px] min-h-[250px]">
@@ -179,7 +167,7 @@ export default function DashboardHome() {
                   stroke="#f3f4f6"
                 />
                 <XAxis
-                  dataKey="hora"
+                  dataKey="dia"
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12, fill: "#9ca3af" }}
@@ -195,6 +183,19 @@ export default function DashboardHome() {
                     borderRadius: "12px",
                     border: "none",
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                  }}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const p = payload[0].payload as ResumoSemanaItem;
+                    return (
+                      <div className="bg-white px-4 py-3 rounded-xl shadow-lg border border-gray-100">
+                        <p className="font-bold text-gray-900 mb-1">{p.dia}</p>
+                        <p className="text-sm text-gray-600">{p.cortes} corte(s)</p>
+                        <p className="text-sm font-bold text-green-600">
+                          {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(p.receita)}
+                        </p>
+                      </div>
+                    );
                   }}
                 />
                 <Area

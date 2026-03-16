@@ -11,6 +11,7 @@ interface CalendarioHorariosProps {
   horaEscolhida: string;
   onHoraSelect: (hora: string) => void;
   erro: string;
+  onVoltar?: () => void;
 }
 
 export default function CalendarioHorarios({
@@ -21,6 +22,7 @@ export default function CalendarioHorarios({
   horaEscolhida,
   onHoraSelect,
   erro,
+  onVoltar,
 }: CalendarioHorariosProps) {
   const toYYYYMMDD = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -45,6 +47,15 @@ export default function CalendarioHorarios({
 
   return (
     <div className="animate-in slide-in-from-right-4 duration-300">
+      {onVoltar && (
+        <button
+          type="button"
+          onClick={onVoltar}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-700 font-medium text-sm mb-6 transition"
+        >
+          <span aria-hidden>←</span> Voltar
+        </button>
+      )}
       <h2 className="text-2xl md:text-3xl font-black text-slate-950 tracking-tight mb-2">
         Para quando?
       </h2>
