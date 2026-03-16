@@ -49,7 +49,8 @@ class PublicController {
         try {
             const tenant = await this._getTenantCompletoBySlug(req.params.slug);
             const tenantId = tenant.id;
-            const { servicoId, dataHora, nome, telefone } = req.body;
+            const { servicoId, dataHora, nome, telefone, metodoPagamento } = req.body;
+            const metodo = metodoPagamento === "DINHEIRO" ? "DINHEIRO" : "PIX";
 
             if (!servicoId || !dataHora || !nome || !telefone) {
                 return res.status(400).json({ erro: "servicoId, dataHora, nome e telefone são obrigatórios." });
@@ -90,6 +91,16 @@ class PublicController {
             const hashPix = crypto.randomBytes(16).toString('hex');
             const codigoPixSimulado = `00020126580014br.gov.bcb.pix0136${hashPix}5204000053039865802BR5913BarberSaaS...`;
 
+            if (metodo === "PIX") {
+                if (!tenant.aceitaPix || !tenant.mercadoPagoAccessToken?.trim()) {
+                    return res.status(400).json({ erro: "Pagamento via PIX não está configurado para esta barbearia." });
+                }
+            } else {
+                if (!tenant.aceitaDinheiro) {
+                    return res.status(400).json({ erro: "Pagamento no local não está habilitado para esta barbearia." });
+                }
+            }
+
             const resultado = await prisma.$transaction(async (tx) => {
                 let cliente = await tx.cliente.findFirst({
                     where: { telefone: telefone.trim(), tenantId }
@@ -104,7 +115,7 @@ class PublicController {
                 const agendamento = await tx.agendamento.create({
                     data: {
                         dataHora: dataHoraDate,
-                        status: "AGUARDANDO_PAGAMENTO",
+                        status: metodo === "PIX" ? "AGUARDANDO_PAGAMENTO" : "CONFIRMADO",
                         tenantId,
                         clienteId: cliente.id,
                         servicoId
@@ -116,20 +127,20 @@ class PublicController {
                         agendamentoId: agendamento.id,
                         tenantId,
                         valor: servico.preco,
-                        status: "PENDENTE",
-                        metodo: "PIX",
-                        codigoPix: codigoPixSimulado
+                        status: metodo === "PIX" ? "PENDENTE" : "PENDENTE",
+                        metodo: metodo,
+                        codigoPix: metodo === "PIX" ? codigoPixSimulado : null
                     }
                 });
 
                 return { agendamento, transacao, servico };
             });
 
-            let codigoPixFinal = resultado.transacao.codigoPix;
-            let qrCodeBase64 = null;
+            if (metodo === "PIX") {
+                let codigoPixFinal = resultado.transacao.codigoPix;
+                let qrCodeBase64 = null;
 
-            const tokenMP = tenant.mercadoPagoAccessToken?.trim() || process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
-            if (tokenMP) {
+                const tokenMP = tenant.mercadoPagoAccessToken?.trim();
                 try {
                     const valorNum = Number(resultado.transacao.valor);
                     const pix = await criarPagamentoPix(tokenMP, {
@@ -151,14 +162,20 @@ class PublicController {
                 } catch (err) {
                     console.error('Mercado Pago PIX falhou, usando PIX simulado:', err.message);
                 }
+
+                return res.status(201).json({
+                    mensagem: "Agendamento reservado! Realize o pagamento.",
+                    transacaoId: resultado.transacao.id,
+                    valor: resultado.transacao.valor,
+                    codigoPix: codigoPixFinal,
+                    qrCodeBase64: qrCodeBase64 || undefined
+                });
             }
 
-            res.status(201).json({
-                mensagem: "Agendamento reservado! Realize o pagamento.",
+            return res.status(201).json({
+                mensagem: "Agendamento confirmado. Pagamento será feito no local.",
                 transacaoId: resultado.transacao.id,
-                valor: resultado.transacao.valor,
-                codigoPix: codigoPixFinal,
-                qrCodeBase64: qrCodeBase64 || undefined
+                valor: resultado.transacao.valor
             });
         } catch (error) {
             if (error.code === 'P2002') {
