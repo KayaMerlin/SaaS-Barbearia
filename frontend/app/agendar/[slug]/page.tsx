@@ -33,6 +33,7 @@ export default function AgendamentoPublico() {
   const [horaEscolhida, setHoraEscolhida] = useState("");
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [metodoPagamento, setMetodoPagamento] = useState<"PIX" | "DINHEIRO">("PIX");
 
   useEffect(() => {
     if (!slug) return;
@@ -105,6 +106,7 @@ export default function AgendamentoPublico() {
           dataHora: dataHoraISO,
           nome: nomeLimpo,
           telefone: telefone.trim(),
+          metodoPagamento,
         }),
       });
       const dados = await resposta.json();
@@ -194,19 +196,48 @@ export default function AgendamentoPublico() {
               />
             )}
             {passo === 3 && (
-              <FormResumo
-                nome={nome}
-                setNome={setNome}
-                telefone={telefone}
-                setTelefone={setTelefone}
-                servicoEscolhido={servicoEscolhido}
-                dataEscolhida={dataEscolhida}
-                horaEscolhida={horaEscolhida}
-                erro={erro}
-                onSubmit={handleFinalizar}
-                salvando={salvando}
-                onVoltar={voltarPasso}
-              />
+              <>
+                <FormResumo
+                  nome={nome}
+                  setNome={setNome}
+                  telefone={telefone}
+                  setTelefone={setTelefone}
+                  servicoEscolhido={servicoEscolhido}
+                  dataEscolhida={dataEscolhida}
+                  horaEscolhida={horaEscolhida}
+                  erro={erro}
+                  onSubmit={handleFinalizar}
+                  salvando={salvando}
+                  onVoltar={voltarPasso}
+                />
+                <div className="mt-6 space-y-3">
+                  <p className="text-sm text-slate-600 font-medium">Forma de pagamento</p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="metodoPagamento"
+                        value="PIX"
+                        checked={metodoPagamento === "PIX"}
+                        onChange={() => setMetodoPagamento("PIX")}
+                        className="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-slate-800">PIX (online)</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="metodoPagamento"
+                        value="DINHEIRO"
+                        checked={metodoPagamento === "DINHEIRO"}
+                        onChange={() => setMetodoPagamento("DINHEIRO")}
+                        className="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-slate-800">Pagamento no local</span>
+                    </label>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 

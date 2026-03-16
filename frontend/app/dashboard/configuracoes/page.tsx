@@ -6,6 +6,35 @@ import LogoUpload from "@/components/LogoUpload";
 import Button from "@/components/ui/Button";
 import { useAuthStore } from "@/store/useAuthStore";
 
+type ToggleProps = {
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  label: string;
+};
+
+function Toggle({ checked, onChange, label }: ToggleProps) {
+  return (
+    <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+      <span className="text-sm font-medium text-slate-800">{label}</span>
+      <div className="relative inline-flex items-center">
+        <input
+          type="checkbox"
+          className="peer sr-only"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <span
+          className="w-12 h-7 flex items-center flex-shrink-0 rounded-full p-1 bg-slate-300 transition-colors duration-300 ease-in-out peer-checked:bg-blue-600"
+        >
+          <span
+            className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out peer-checked:translate-x-5"
+          />
+        </span>
+      </div>
+    </label>
+  );
+}
+
 export default function ConfiguracoesPage() {
   const { usuario, setUsuario } = useAuthStore();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -246,28 +275,16 @@ export default function ConfiguracoesPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={aceitaPix}
-                  onChange={(e) => setAceitaPix(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-slate-800">
-                  Aceitar pagamento online via PIX
-                </span>
-              </label>
-              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={aceitaDinheiro}
-                  onChange={(e) => setAceitaDinheiro(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-slate-800">
-                  Aceitar pagamento no local (dinheiro/cartão)
-                </span>
-              </label>
+              <Toggle
+                checked={aceitaPix}
+                onChange={setAceitaPix}
+                label="Aceitar pagamento online via PIX"
+              />
+              <Toggle
+                checked={aceitaDinheiro}
+                onChange={setAceitaDinheiro}
+                label="Aceitar pagamento no local (dinheiro/cartão)"
+              />
             </div>
           </div>
         </div>
