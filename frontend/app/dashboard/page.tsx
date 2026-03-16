@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AreaChart,
   Area,
@@ -36,11 +37,21 @@ function gerarSeteDiasZerados(): ResumoSemanaItem[] {
 }
 
 export default function DashboardHome() {
+  const router = useRouter();
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [dadosGrafico, setDadosGrafico] = useState<ResumoSemanaItem[]>(() => gerarSeteDiasZerados());
   const [carregando, setCarregando] = useState(true);
 
   const dataHoje = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    const usuarioStr = typeof window !== "undefined" ? localStorage.getItem("barbersaas_usuario") : null;
+    const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+    if (usuario?.role === "ADMIN") {
+      router.replace("/admin");
+      return;
+    }
+  }, [router]);
 
   const carregarAgenda = async () => {
     try {
@@ -59,6 +70,9 @@ export default function DashboardHome() {
   };
 
   useEffect(() => {
+    const usuarioStr = typeof window !== "undefined" ? localStorage.getItem("barbersaas_usuario") : null;
+    const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+    if (usuario?.role === "ADMIN") return;
     carregarAgenda();
   }, []);
 
