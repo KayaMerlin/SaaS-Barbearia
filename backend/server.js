@@ -58,6 +58,27 @@ app.get('/', (req, res) => {
   });
 });
 
+const { runLembreteJob } = require('./src/jobs/lembreteJob');
+app.get('/cron/lembrete', (req, res) => {
+  const secret = process.env.CRON_SECRET?.trim();
+  if (secret && req.query.secret !== secret) {
+    return res.status(403).json({ erro: 'Forbidden' });
+  }
+  runLembreteJob()
+    .then((n) => res.json({ ok: true, processados: n }))
+    .catch((e) => {
+      console.error('cron/lembrete', e);
+      res.status(500).json({ erro: e.message });
+    });
+});
+
+if (process.env.ENABLE_LEMBRETE_CRON === 'true') {
+  const cron = require('node-cron');
+  cron.schedule('*/30 * * * *', () => {
+    runLembreteJob().then((n) => n > 0 && console.log('LembreteJob:', n, 'enviados'));
+  });
+}
+
 app.listen(porta, () => {
   console.log(`Servidor rodando na porta ${porta}`);
 });

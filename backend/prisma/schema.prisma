@@ -55,17 +55,18 @@ model Cliente {
 }
 
 model Agendamento {
-  id         String   @id @default(uuid())
-  dataHora   DateTime
-  status     String   @default("PENDENTE")
-  createdAt  DateTime @default(now())
-  tenantId   String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
-  clienteId  String
-  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  servicoId  String
-  servico    Servico  @relation(fields: [servicoId], references: [id])
-  transacao  Transacao?
+  id               String   @id @default(uuid())
+  dataHora         DateTime
+  status           String   @default("PENDENTE")
+  lembreteEnviado  Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  clienteId        String
+  cliente          Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  servicoId        String
+  servico          Servico  @relation(fields: [servicoId], references: [id])
+  transacao        Transacao?
 
   @@unique([tenantId, dataHora])
 }

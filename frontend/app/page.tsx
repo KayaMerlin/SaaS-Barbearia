@@ -16,6 +16,18 @@ export default function Home() {
             Início
           </a>
           <a
+            href="#como-funciona"
+            className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+          >
+            Como funciona
+          </a>
+          <a
+            href="#preco"
+            className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
+          >
+            Preço
+          </a>
+          <a
             href="#produto"
             className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
           >
@@ -76,6 +88,85 @@ export default function Home() {
                   priority
                 />
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="como-funciona" className="py-24 bg-slate-50 px-6">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-slate-900">
+                Como funciona
+              </h2>
+              <p className="text-slate-600 mt-4 max-w-2xl mx-auto">
+                Três passos e seu cliente agenda sozinho. Você só recebe a notificação e foca na tesoura.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-10">
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center">
+                <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-black">
+                  1
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Configure sua barbearia</h3>
+                <p className="text-slate-600">
+                  Cadastre serviços, preços e horários de funcionamento em menos de 5 minutos.
+                </p>
+              </div>
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center">
+                <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-black">
+                  2
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Compartilhe seu link</h3>
+                <p className="text-slate-600">
+                  Coloque o link da sua agenda na bio do Instagram ou mande no WhatsApp dos clientes.
+                </p>
+              </div>
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center">
+                <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-black">
+                  3
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Receba os agendamentos</h3>
+                <p className="text-slate-600">
+                  O cliente escolhe o horário e paga o PIX. Você recebe a notificação e foca no corte.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="preco" className="py-24 bg-white px-6">
+          <div className="container mx-auto max-w-4xl">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-slate-900">
+                Plano único, sem surpresas
+              </h2>
+              <p className="text-slate-600 mt-4">
+                Comece seu teste de 7 dias. Se o sistema não facilitar sua vida, você não paga nada.
+              </p>
+            </div>
+            <div className="bg-white border-2 border-slate-200 rounded-3xl p-8 md:p-10 shadow-lg max-w-xl mx-auto">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-200 pb-8 mb-8">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900">Plano Profissional</h3>
+                  <p className="text-3xl font-black text-blue-600 mt-1">R$ 49,90 <span className="text-lg font-normal text-slate-500">/mês</span></p>
+                </div>
+                <div className="text-left md:text-right text-slate-600 space-y-1">
+                  <p>Agenda ilimitada</p>
+                  <p>Gestão financeira</p>
+                  <p>Link exclusivo para clientes</p>
+                  <p>Suporte VIP</p>
+                </div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
+                <p className="font-bold text-amber-900">Teste grátis</p>
+                <p className="text-sm text-amber-800">7 dias com acesso total. Sem cartão de crédito.</p>
+              </div>
+              <Link
+                href="/cadastro"
+                className="block w-full py-4 bg-black text-white rounded-xl font-bold text-center hover:bg-slate-800 transition"
+              >
+                Começar teste grátis
+              </Link>
             </div>
           </div>
         </section>
@@ -161,6 +252,9 @@ export default function Home() {
                 </p>
               </div>
             </div>
+            <p className="text-center text-slate-600 mt-10 text-sm max-w-2xl mx-auto">
+              Diga adeus aos esquecimentos: o sistema pode avisar seus clientes por WhatsApp automaticamente 2 horas antes do corte.
+            </p>
           </div>
         </section>
 
