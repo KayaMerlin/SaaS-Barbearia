@@ -81,6 +81,12 @@ export default function Login() {
             />
           </div>
 
+          <div className="text-right mt-2">
+            <a href="/esqueci-senha" className="text-sm text-blue-600 font-medium hover:underline">
+              Esqueci minha senha
+            </a>
+          </div>
+
           <Button
             type="submit"
             variant="secondary"
