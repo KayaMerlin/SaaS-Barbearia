@@ -8,29 +8,29 @@ import Button from "@/components/ui/Button";
 export default function EsqueciSenhaPage() {
   const router = useRouter();
   const [etapa, setEtapa] = useState<1 | 2 | 3>(1);
-  const [telefone, setTelefone] = useState("");
+  const [email, setEmail] = useState("");
   const [codigo, setCodigo] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [mensagem, setMensagem] = useState<{ tipo: "sucesso" | "erro"; texto: string } | null>(null);
 
-  const handleEnviarTelefone = async (e: React.FormEvent) => {
+  const handleEnviarEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (telefone.length < 10) {
-      setMensagem({ tipo: "erro", texto: "Digite um telefone válido com DDD." });
+    if (!email.includes("@")) {
+      setMensagem({ tipo: "erro", texto: "Digite um e-mail válido." });
       return;
     }
 
     setCarregando(true);
     setMensagem(null);
     try {
-      await api.post("/auth/esqueci-senha", { telefone });
-      setMensagem({ tipo: "sucesso", texto: "Código enviado! Verifique seu WhatsApp." });
+      await api.post("/auth/esqueci-senha", { email });
+      setMensagem({ tipo: "sucesso", texto: "Código enviado! Verifique sua caixa de entrada e o SPAM." });
       setEtapa(2);
     } catch (error: any) {
       setMensagem({
         tipo: "erro",
-        texto: error.response?.data?.erro || "Erro ao enviar código. Verifique se o telefone está cadastrado.",
+        texto: error.response?.data?.erro || "Erro ao enviar código. Verifique o e-mail.",
       });
     } finally {
       setCarregando(false);
@@ -57,7 +57,7 @@ export default function EsqueciSenhaPage() {
     setCarregando(true);
     setMensagem(null);
     try {
-      await api.post("/auth/resetar-senha", { telefone, codigo, novaSenha });
+      await api.post("/auth/resetar-senha", { email, codigo, novaSenha });
       setMensagem({ tipo: "sucesso", texto: "Senha alterada com sucesso! Redirecionando..." });
       setTimeout(() => router.push("/login"), 2500);
     } catch (error: any) {
@@ -74,8 +74,8 @@ export default function EsqueciSenhaPage() {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Recuperar Senha</h1>
           <p className="text-sm text-slate-500 mt-2">
-            {etapa === 1 && "Digite seu celular para receber o código via WhatsApp."}
-            {etapa === 2 && `Enviamos um código para ${telefone}`}
+            {etapa === 1 && "Digite seu e-mail de cadastro para receber o código."}
+            {etapa === 2 && `Enviamos um código para ${email}`}
             {etapa === 3 && "Crie uma nova senha segura para sua conta."}
           </p>
         </div>
@@ -91,14 +91,14 @@ export default function EsqueciSenhaPage() {
         )}
 
         {etapa === 1 && (
-          <form onSubmit={handleEnviarTelefone} className="space-y-6">
+          <form onSubmit={handleEnviarEmail} className="space-y-6">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Celular com DDD</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">E-mail</label>
               <input
-                type="tel"
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-                placeholder="Ex: 11999999999"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
                 className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none bg-slate-50 font-medium"
                 required
               />
@@ -141,7 +141,7 @@ export default function EsqueciSenhaPage() {
                 onClick={() => setEtapa(1)}
                 className="text-sm text-slate-500 font-medium hover:underline"
               >
-                Corrigir número
+                Corrigir e-mail
               </button>
             </div>
           </form>

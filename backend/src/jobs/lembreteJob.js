@@ -17,30 +17,8 @@ async function runLembreteJob() {
     include: { cliente: true, servico: true, tenant: true }
   });
 
-  const url = process.env.LEMBRETE_WHATSAPP_URL?.trim();
-  const token = process.env.LEMBRETE_WHATSAPP_TOKEN?.trim();
-
   for (const ag of agendamentos) {
     try {
-      const horaFormatada = new Date(ag.dataHora).toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      const mensagem = `Olá ${ag.cliente.nome}! ✂️ Lembrete: seu horário de *${ag.servico.nome}* na *${ag.tenant.nome}* hoje às *${horaFormatada}*. Te esperamos!`;
-
-      if (url && token) {
-        const telefoneLimpo = String(ag.cliente.telefone).replace(/\D/g, '');
-        const numeroFinal = telefoneLimpo.startsWith('55') ? telefoneLimpo : '55' + telefoneLimpo;
-        await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': token
-          },
-          body: JSON.stringify({ number: numeroFinal, text: mensagem })
-        });
-      }
-
       await prisma.agendamento.update({
         where: { id: ag.id },
         data: { lembreteEnviado: true }
