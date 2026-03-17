@@ -58,6 +58,17 @@ class AgendamentoController {
             res.status(500).json({ erro: error.message });
         }
     }
+
+    async finalizarPagamentoDinheiro(req, res) {
+        try {
+            const { id } = req.params;
+            const tenantId = req.usuario.tenantId;
+            const agendamento = await agendamentoService.finalizarPagamentoDinheiro(id, tenantId);
+            res.json(agendamento);
+        } catch (error) {
+            res.status(400).json({ erro: error.message });
+        }
+    }
 }
 
 module.exports = new AgendamentoController();

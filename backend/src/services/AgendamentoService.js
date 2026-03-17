@@ -74,7 +74,8 @@ class AgendamentoService {
             },
             include: {
                 cliente: true,
-                servico: true
+                servico: true,
+                transacao: true
             },
             orderBy: {
                 dataHora: 'asc'
@@ -82,6 +83,45 @@ class AgendamentoService {
         });
 
         return agendamentos;
+    }
+
+    async finalizarPagamentoDinheiro(agendamentoId, tenantId) {
+        const agendamento = await prisma.agendamento.findFirst({
+            where: { id: agendamentoId, tenantId },
+            include: { transacao: true, servico: true }
+        });
+
+        if (!agendamento) {
+            throw new Error("Agendamento não encontrado ou não pertence a esta barbearia.");
+        }
+
+        if (agendamento.status !== 'CONFIRMADO') {
+            throw new Error("Só é possível finalizar pagamento em dinheiro para agendamentos confirmados.");
+        }
+
+        if (!agendamento.transacao || agendamento.transacao.metodo !== 'DINHEIRO') {
+            throw new Error("Este agendamento não é de pagamento em dinheiro.");
+        }
+
+        if (agendamento.transacao.status !== 'PENDENTE') {
+            throw new Error("Este pagamento em dinheiro já foi finalizado.");
+        }
+
+        await prisma.$transaction([
+            prisma.agendamento.update({
+                where: { id: agendamentoId },
+                data: { status: 'CONCLUIDO' }
+            }),
+            prisma.transacao.update({
+                where: { id: agendamento.transacao.id },
+                data: { status: 'CONCLUIDO' }
+            })
+        ]);
+
+        return prisma.agendamento.findUnique({
+            where: { id: agendamentoId },
+            include: { cliente: true, servico: true, transacao: true }
+        });
     }
 
     async atualizarStatus(agendamentoId, tenantId, novoStatus) {
@@ -144,7 +184,9 @@ class AgendamentoService {
             if (!porDia[dataISO]) continue;
             porDia[dataISO].cortes += 1;
             const preco = Number(ag.servico?.preco ?? 0);
-            porDia[dataISO].receita += preco;
+            if (ag.status === 'CONCLUIDO') {
+                porDia[dataISO].receita += preco;
+            }
         }
 
         return Object.keys(porDia)

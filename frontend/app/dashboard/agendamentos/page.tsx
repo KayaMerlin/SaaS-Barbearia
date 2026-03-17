@@ -9,6 +9,7 @@ type Agendamento = {
   status: string;
   servico: { nome: string; preco: string; duracao?: number };
   cliente: { nome: string; telefone: string };
+  transacao?: { metodo: string; status: string } | null;
 };
 
 function formatarDataBR(isoDate: string) {
@@ -78,6 +79,18 @@ export default function AgendamentosPage() {
       await carregarAgenda();
     } catch (error) {
       console.error("Erro ao atualizar:", error);
+    } finally {
+      setAtualizandoId(null);
+    }
+  };
+
+  const finalizarPagamentoDinheiro = async (id: string) => {
+    setAtualizandoId(id);
+    try {
+      await api.post(`/agendamentos/${id}/finalizar-dinheiro`);
+      await carregarAgenda();
+    } catch (error) {
+      console.error("Erro ao finalizar pagamento:", error);
     } finally {
       setAtualizandoId(null);
     }
@@ -168,7 +181,11 @@ export default function AgendamentosPage() {
               const duracao = ag.servico?.duracao ? ` (${ag.servico.duracao} min)` : "";
               const loading = atualizandoId === ag.id;
               const podeConfirmar = ag.status === "AGUARDANDO_PAGAMENTO";
-              const podeConcluir = ag.status === "CONFIRMADO";
+              const pagamentoDinheiroPendente =
+                ag.status === "CONFIRMADO" &&
+                ag.transacao?.metodo === "DINHEIRO" &&
+                ag.transacao?.status === "PENDENTE";
+              const podeConcluir = ag.status === "CONFIRMADO" && !pagamentoDinheiroPendente;
               const podeCancelar = ag.status !== "CANCELADO" && ag.status !== "CONCLUIDO";
 
               return (
@@ -200,7 +217,7 @@ export default function AgendamentosPage() {
                     </p>
                   </div>
 
-                  {(podeConfirmar || podeConcluir || podeCancelar) && (
+                  {(podeConfirmar || podeConcluir || pagamentoDinheiroPendente || podeCancelar) && (
                     <div className="flex gap-2 mt-1">
                       {podeConfirmar && (
                         <button
@@ -212,6 +229,28 @@ export default function AgendamentosPage() {
                           {loading ? "..." : "Confirmar"}
                         </button>
                       )}
+                      {pagamentoDinheiroPendente && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={loading}
+                            onClick={() => finalizarPagamentoDinheiro(ag.id)}
+                            className="flex-1 bg-green-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-green-700 transition disabled:opacity-50"
+                            title="Cliente pagou em dinheiro"
+                          >
+                            {loading ? "..." : "✅ Finalizar (Recebido)"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={loading}
+                            onClick={() => atualizarStatus(ag.id, "CANCELADO")}
+                            className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-200 transition disabled:opacity-50"
+                            title="Cliente não compareceu"
+                          >
+                            {loading ? "..." : "❌ Cancelar (Faltou)"}
+                          </button>
+                        </>
+                      )}
                       {podeConcluir && (
                         <button
                           type="button"
@@ -222,7 +261,7 @@ export default function AgendamentosPage() {
                           {loading ? "..." : "Concluído"}
                         </button>
                       )}
-                      {podeCancelar && (
+                      {podeCancelar && !pagamentoDinheiroPendente && (
                         <button
                           type="button"
                           disabled={loading}
