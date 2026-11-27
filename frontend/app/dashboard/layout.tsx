@@ -43,6 +43,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [statusAssinatura, setStatusAssinatura] = useState<string | null>(null);
   const [dataVencimento, setDataVencimento] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [diasRestantesTrial, setDiasRestantesTrial] = useState(0);
   const { usuario, setUsuario, logout } = useAuthStore();
 
   useEffect(() => {
@@ -80,9 +81,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     void verificarAssinatura();
   }, [montado, pathname, router]);
 
-  const diasRestantesTrial = dataVencimento && statusAssinatura === "TRIAL"
-    ? Math.max(0, Math.ceil((new Date(dataVencimento).getTime() - Date.now()) / 86400000))
-    : 0;
+  useEffect(() => {
+    if (statusAssinatura !== "TRIAL" || !dataVencimento) {
+      setDiasRestantesTrial(0);
+      return;
+    }
+    const restante = Math.ceil((new Date(dataVencimento).getTime() - Date.now()) / 86400000);
+    setDiasRestantesTrial(Math.max(0, restante));
+  }, [dataVencimento, statusAssinatura]);
   const mostrarBannerTrial = statusAssinatura === "TRIAL" && pathname !== "/dashboard/assinatura" && diasRestantesTrial > 0;
   const nomeExibicao = usuario?.nome ?? "Seu espaço";
   const logoExibicao = usuario?.logoUrl;
