@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const prisma = require('../config/db');
 const { getHorariosDisponiveis } = require('../services/HorariosService');
 const { criarPagamentoPix } = require('../services/MercadoPagoService');
@@ -88,9 +87,6 @@ class PublicController {
                 return res.status(409).json({ erro: "Este horário já está reservado." });
             }
 
-            const hashPix = crypto.randomBytes(16).toString('hex');
-            const codigoPixSimulado = `00020126580014br.gov.bcb.pix0136${hashPix}5204000053039865802BR5913BarberSaaS...`;
-
             if (metodo === "PIX") {
                 if (!tenant.aceitaPix || !tenant.mercadoPagoAccessToken?.trim()) {
                     return res.status(400).json({ erro: "Pagamento via PIX não está configurado para esta barbearia." });
@@ -129,7 +125,7 @@ class PublicController {
                         valor: servico.preco,
                         status: metodo === "PIX" ? "PENDENTE" : "PENDENTE",
                         metodo: metodo,
-                        codigoPix: metodo === "PIX" ? codigoPixSimulado : null
+                        codigoPix: null
                     }
                 });
 
@@ -137,38 +133,55 @@ class PublicController {
             });
 
             if (metodo === "PIX") {
-                let codigoPixFinal = resultado.transacao.codigoPix;
-                let qrCodeBase64 = null;
-
                 const tokenMP = tenant.mercadoPagoAccessToken?.trim();
+                let pix;
                 try {
-                    const valorNum = Number(resultado.transacao.valor);
-                    const pix = await criarPagamentoPix(tokenMP, {
-                        valor: valorNum,
+                    pix = await criarPagamentoPix(tokenMP, {
+                        valor: Number(resultado.transacao.valor),
                         descricao: `Reserva - ${resultado.servico.nome}`,
                         emailPagador: `cliente_${telefone.replace(/\D/g, '')}@barbersaas.com`,
                         externalReference: resultado.transacao.id,
-                        nomeCliente: nome
+                        nomeCliente: nomeLimpo
                     });
-                    codigoPixFinal = pix.codigoPix || codigoPixFinal;
-                    qrCodeBase64 = pix.qrCodeBase64 || null;
+                } catch (err) {
+                    console.error('Falha ao criar PIX no Mercado Pago:', err);
+                    // A unicidade (tenantId, dataHora) impede reuso de reservas canceladas.
+                    // Como nenhum código PIX foi entregue ao cliente, remove esta reserva
+                    // e a transação associada por cascade para liberar o horário.
+                    try {
+                        await prisma.agendamento.delete({
+                            where: { id: resultado.agendamento.id }
+                        });
+                    } catch (cleanupError) {
+                        console.error('Não foi possível remover a reserva após falha do PIX:', cleanupError);
+                    }
+                    return res.status(502).json({
+                        erro: 'Não foi possível gerar o PIX. Tente novamente.'
+                    });
+                }
+
+                try {
                     await prisma.transacao.update({
                         where: { id: resultado.transacao.id },
                         data: {
-                            codigoPix: codigoPixFinal,
+                            codigoPix: pix.codigoPix,
                             mercadoPagoPaymentId: pix.paymentId
                         }
                     });
                 } catch (err) {
-                    console.error('Mercado Pago PIX falhou, usando PIX simulado:', err.message);
+                    // O PIX pode existir no provedor: preservar a reserva para reconciliação manual.
+                    console.error('PIX criado mas não registrado localmente:', err);
+                    return res.status(503).json({
+                        erro: 'Pagamento criado, mas não foi possível concluir a reserva. Entre em contato com o estabelecimento antes de pagar.'
+                    });
                 }
 
                 return res.status(201).json({
                     mensagem: "Agendamento reservado! Realize o pagamento.",
                     transacaoId: resultado.transacao.id,
                     valor: resultado.transacao.valor,
-                    codigoPix: codigoPixFinal,
-                    qrCodeBase64: qrCodeBase64 || undefined
+                    codigoPix: pix.codigoPix,
+                    qrCodeBase64: pix.qrCodeBase64 || undefined
                 });
             }
 
@@ -208,7 +221,8 @@ class PublicController {
                 return res.status(400).json({ erro: 'Data inválida.' });
             }
 
-            const BR_UTC_OFFSET_MS = 3 * 60 * 60 * 1000;
+            // Até termos fuso IANA por tenant, usa Brasília (UTC-3).
+            const BR_UTC_OFFSET_MS = -3 * 60 * 60 * 1000;
             const nowBrazil = new Date(Date.now() + BR_UTC_OFFSET_MS);
             const hojeBrazil = nowBrazil.getUTCFullYear() + '-' +
                 String(nowBrazil.getUTCMonth() + 1).padStart(2, '0') + '-' +
