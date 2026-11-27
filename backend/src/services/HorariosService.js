@@ -14,7 +14,8 @@ function minutesToTimeString(minutes) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-const BR_UTC_OFFSET_HOURS = 3;
+// Fuso de Brasília (UTC-3). TODO: parametrizar por tenant com fuso IANA.
+const BR_UTC_OFFSET_HOURS = -3;
 
 function dateToMinutes(date) {
   return date.getUTCHours() * 60 + date.getUTCMinutes();
