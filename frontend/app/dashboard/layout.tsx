@@ -35,6 +35,15 @@ const configuracoes: { href: string; texto: string; icone: IconName }[] = [
   { href: "/dashboard/assinatura", texto: "Meu plano", icone: "plano" },
 ];
 
+function MenuLinks({ links, pathname, onNavigate }: { links: typeof navegacao; pathname: string; onNavigate: () => void }) {
+  const ativo = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href + "/"));
+  return <div className="space-y-1">{links.map((item) => (
+    <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={ativo(item.href)?"page":undefined} className={"sidebar-link gap-3 " + (ativo(item.href)?"sidebar-link-active":"text-[#c9b9c5]")}>
+      <MenuIcon name={item.icone}/><span>{item.texto}</span>{ativo(item.href)&&<span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#bb7a8b]"/>}
+    </Link>
+  ))}</div>;
+}
+
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -98,13 +107,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleLogout = () => { logout(); router.push("/login"); };
   const ativo = (href: string) => pathname === href || (href !== "/dashboard" && pathname.startsWith(href + "/"));
 
-  const MenuLinks = ({ links }: { links: typeof navegacao }) => (
-    <div className="space-y-1">{links.map((item) => (
-      <Link key={item.href} href={item.href} onClick={() => setMenuAberto(false)} aria-current={ativo(item.href)?"page":undefined} className={"sidebar-link gap-3 " + (ativo(item.href)?"sidebar-link-active":"text-[#c9b9c5]")}>
-        <MenuIcon name={item.icone}/><span>{item.texto}</span>{ativo(item.href)&&<span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#bb7a8b]"/>}
-      </Link>
-    ))}</div>
-  );
+
 
   if (!montado || !localStorage.getItem("barbersaas_token")) return null;
 
@@ -122,8 +125,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="min-w-0"><p className="truncate text-sm font-bold text-white" title={nomeExibicao}>{nomeExibicao}</p><span className="mt-1 block text-[11px] text-[#bfaebc]">{statusAssinatura==="ATIVO"?"Plano ativo":statusAssinatura==="TRIAL"?"Período de teste":"Área do estabelecimento"}</span></div>
         </div>
 
-        <nav className="mt-9 flex-1" aria-label="Menu lateral"><p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.21em] text-[#a993a4]">Operação</p><MenuLinks links={navegacao}/><p className="mb-3 mt-9 px-3 text-[10px] font-bold uppercase tracking-[.21em] text-[#a993a4]">Preferências</p><MenuLinks links={configuracoes}/>
-          {isAdmin && <div className="mt-4"><MenuLinks links={[{href:"/admin",texto:"Administração",icone:"admin"}]}/></div>}
+        <nav className="mt-9 flex-1" aria-label="Menu lateral"><p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[.21em] text-[#a993a4]">Operação</p><MenuLinks links={navegacao} pathname={pathname} onNavigate={()=>setMenuAberto(false)}/><p className="mb-3 mt-9 px-3 text-[10px] font-bold uppercase tracking-[.21em] text-[#a993a4]">Preferências</p><MenuLinks links={configuracoes} pathname={pathname} onNavigate={()=>setMenuAberto(false)}/>
+          {isAdmin && <div className="mt-4"><MenuLinks links={[{href:"/admin",texto:"Administração",icone:"admin"}]} pathname={pathname} onNavigate={()=>setMenuAberto(false)}/></div>}
         </nav>
         <div className="mt-8 border-t border-white/10 pt-4"><button type="button" onClick={handleLogout} className="sidebar-link w-full gap-3 text-[#c9b9c5] hover:text-white"><MenuIcon name="sair"/> Sair da conta</button><p className="mt-5 px-3 text-[10px] text-[#947e91]">BarberSaaS Studio</p></div>
       </aside>
