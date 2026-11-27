@@ -220,7 +220,8 @@ class PublicController {
                 return res.status(400).json({ erro: 'Data inválida.' });
             }
 
-            const BR_UTC_OFFSET_MS = 3 * 60 * 60 * 1000;
+            // Até termos fuso IANA por tenant, usa Brasília (UTC-3).
+            const BR_UTC_OFFSET_MS = -3 * 60 * 60 * 1000;
             const nowBrazil = new Date(Date.now() + BR_UTC_OFFSET_MS);
             const hojeBrazil = nowBrazil.getUTCFullYear() + '-' +
                 String(nowBrazil.getUTCMonth() + 1).padStart(2, '0') + '-' +
