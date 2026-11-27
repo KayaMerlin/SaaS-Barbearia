@@ -3,13 +3,29 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
+
+type TransacaoFinanceira = {
+  id: string;
+  createdAt: string;
+  valor: string | number;
+  status: string;
+  agendamento?: {
+    cliente?: { nome?: string };
+    servico?: { nome?: string };
+  };
+};
+type DadosFinanceiros = {
+  resumo?: { totalRecebido?: string | number; totalPendente?: string | number };
+  historico?: TransacaoFinanceira[];
+};
+
 export default function FinanceiroPage() {
-  const [dados, setDados] = useState<any>(null);
+  const [dados, setDados] = useState<DadosFinanceiros | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
     api
-      .get("/financeiro")
+      .get<DadosFinanceiros>("/financeiro")
       .then((res) => setDados(res.data))
       .catch((err) => console.error("Erro ao carregar financeiro", err))
       .finally(() => setCarregando(false));
@@ -33,7 +49,7 @@ export default function FinanceiroPage() {
           Financeiro
         </h2>
         <p className="text-slate-500 text-sm mt-1">
-          Acompanhe as suas receitas e transações via PIX.
+          Acompanhe valores recebidos, pendências e movimentações do seu espaço.
         </p>
       </div>
 
@@ -42,16 +58,16 @@ export default function FinanceiroPage() {
           <p className="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">
             Total Recebido (Pago)
           </p>
-          <p className="text-5xl font-black text-green-600">
-            {formatarMoeda(dados?.resumo?.totalRecebido ?? 0)}
+          <p className="text-5xl font-black text-[#3e8f6c]">
+            {formatarMoeda(Number(dados?.resumo?.totalRecebido ?? 0))}
           </p>
         </div>
         <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center">
           <p className="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">
             Aguardando Pagamento
           </p>
-          <p className="text-5xl font-black text-amber-500">
-            {formatarMoeda(dados?.resumo?.totalPendente ?? 0)}
+          <p className="text-5xl font-black text-[#ba8c48]">
+            {formatarMoeda(Number(dados?.resumo?.totalPendente ?? 0))}
           </p>
         </div>
       </div>
@@ -72,7 +88,7 @@ export default function FinanceiroPage() {
               </tr>
             </thead>
             <tbody className="text-sm">
-              {dados?.historico?.map((tx: any) => (
+              {dados?.historico?.map((tx) => (
                 <tr
                   key={tx.id}
                   className="border-b border-slate-50 hover:bg-slate-50/50 transition"
@@ -101,8 +117,8 @@ export default function FinanceiroPage() {
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold ${
                         tx.status === "PAGO"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-amber-100 text-amber-700"
+                          ? "bg-[#e8f4ed] text-[#367553]"
+                          : "bg-[#fff2e5] text-[#a5753a]"
                       }`}
                     >
                       {tx.status}
