@@ -2,6 +2,7 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import { api } from "@/lib/api";
+import { mensagemErroApi } from "@/lib/mensagem-erro-api";
 
 type Cliente = {
   id: string;
@@ -45,8 +46,8 @@ export default function ClientesPage() {
       setNome("");
       setTelefone("");
       carregarClientes();
-    } catch (error: any) {
-      setErro(error.response?.data?.erro || "Erro ao registrar cliente");
+    } catch (error) {
+      setErro(mensagemErroApi(error, "Erro ao registrar cliente"));
     } finally {
       setSalvando(false);
     }
@@ -62,8 +63,8 @@ export default function ClientesPage() {
     try {
       await api.delete(`/clientes/${cliente.id}`);
       carregarClientes();
-    } catch (error: any) {
-      alert(error.response?.data?.erro || "Erro ao apagar cliente.");
+    } catch (error) {
+      alert(mensagemErroApi(error, "Erro ao apagar cliente."));
     }
   };
 
@@ -75,21 +76,21 @@ export default function ClientesPage() {
             Clientes
           </h2>
           <p className="text-slate-500 text-sm mt-1">
-            A sua base de dados de clientes e contactos
+            A sua base de dados de clientes e contatos
           </p>
         </div>
         <button
           onClick={() => setModalAberto(true)}
-          className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition flex items-center gap-2"
+          className="bg-[#493647] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-[#665061] transition flex items-center gap-2"
         >
-          <span className="text-lg">+</span> Novo Cliente
+          <span className="text-lg">+</span> Novo cliente
         </button>
       </div>
 
       <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex-1">
         {carregando ? (
           <div className="p-8 text-center text-slate-500 font-medium">
-            A carregar os seus clientes...
+            Carregando seus clientes...
           </div>
         ) : clientes.length === 0 ? (
           <div className="p-16 text-center">
@@ -97,7 +98,7 @@ export default function ClientesPage() {
               👥
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">
-              Nenhum cliente registado
+              Nenhum cliente cadastrado
             </h3>
             <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
               Os clientes irão aparecer aqui automaticamente quando fizerem um
@@ -110,10 +111,10 @@ export default function ClientesPage() {
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50">
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Nome do Cliente
+                    Nome do cliente
                   </th>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    Telemóvel / WhatsApp
+                    Celular / WhatsApp
                   </th>
                   <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
                     Ação
@@ -177,7 +178,7 @@ export default function ClientesPage() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h3 className="text-xl font-black text-slate-900">
-                Novo Cliente
+                Novo cliente
               </h3>
               <button
                 onClick={() => setModalAberto(false)}
@@ -197,7 +198,7 @@ export default function ClientesPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">
-                    Nome do Cliente
+                    Nome do cliente
                   </label>
                   <input
                     type="text"
@@ -205,13 +206,13 @@ export default function ClientesPage() {
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     placeholder="Ex: João Silva"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#b98191] outline-none transition font-medium"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">
-                    Telemóvel (Apenas números)
+                    Celular (Apenas números)
                   </label>
                   <input
                     type="text"
@@ -219,7 +220,7 @@ export default function ClientesPage() {
                     value={telefone}
                     onChange={(e) => setTelefone(e.target.value)}
                     placeholder="11999998888"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#b98191] outline-none transition font-medium"
                   />
                 </div>
               </div>
@@ -235,9 +236,9 @@ export default function ClientesPage() {
                 <button
                   type="submit"
                   disabled={salvando}
-                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition disabled:opacity-70"
+                  className="flex-1 px-4 py-2.5 bg-[#493647] text-white font-bold rounded-xl hover:bg-[#665061] transition disabled:opacity-70"
                 >
-                  {salvando ? "A guardar..." : "Guardar Cliente"}
+                  {salvando ? "Salvando..." : "Salvar cliente"}
                 </button>
               </div>
             </form>
