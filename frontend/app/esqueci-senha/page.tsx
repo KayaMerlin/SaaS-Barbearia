@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { mensagemErroApi } from "@/lib/mensagem-erro-api";
 import Button from "@/components/ui/Button";
 
 export default function EsqueciSenhaPage() {
@@ -27,10 +28,10 @@ export default function EsqueciSenhaPage() {
       await api.post("/auth/esqueci-senha", { email });
       setMensagem({ tipo: "sucesso", texto: "Código enviado! Verifique sua caixa de entrada e o SPAM." });
       setEtapa(2);
-    } catch (error: any) {
+    } catch (error) {
       setMensagem({
         tipo: "erro",
-        texto: error.response?.data?.erro || "Erro ao enviar código. Verifique o e-mail.",
+        texto: mensagemErroApi(error, "Erro ao enviar código. Verifique o e-mail."),
       });
     } finally {
       setCarregando(false);
@@ -60,8 +61,8 @@ export default function EsqueciSenhaPage() {
       await api.post("/auth/resetar-senha", { email, codigo, novaSenha });
       setMensagem({ tipo: "sucesso", texto: "Senha alterada com sucesso! Redirecionando..." });
       setTimeout(() => router.push("/login"), 2500);
-    } catch (error: any) {
-      setMensagem({ tipo: "erro", texto: error.response?.data?.erro || "Código inválido ou expirado." });
+    } catch (error) {
+      setMensagem({ tipo: "erro", texto: mensagemErroApi(error, "Código inválido ou expirado.") });
       setEtapa(2);
     } finally {
       setCarregando(false);
@@ -99,7 +100,7 @@ export default function EsqueciSenhaPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none bg-slate-50 font-medium"
+                className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#b98191] outline-none bg-slate-50 font-medium"
                 required
               />
             </div>
@@ -110,7 +111,7 @@ export default function EsqueciSenhaPage() {
               <button
                 type="button"
                 onClick={() => router.push("/login")}
-                className="text-sm text-blue-600 font-medium hover:underline"
+                className="text-sm text-[#a56e7e] font-medium hover:underline"
               >
                 Voltar para o Login
               </button>
@@ -128,7 +129,7 @@ export default function EsqueciSenhaPage() {
                 value={codigo}
                 onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
                 placeholder="0000"
-                className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none bg-slate-50 font-medium text-center text-2xl tracking-[0.5em]"
+                className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#b98191] outline-none bg-slate-50 font-medium text-center text-2xl tracking-[0.5em]"
                 required
               />
             </div>
@@ -156,7 +157,7 @@ export default function EsqueciSenhaPage() {
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
-                className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none bg-slate-50 font-medium"
+                className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#b98191] outline-none bg-slate-50 font-medium"
                 required
               />
             </div>
