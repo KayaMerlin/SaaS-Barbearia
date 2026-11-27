@@ -145,14 +145,15 @@ class PublicController {
                     });
                 } catch (err) {
                     console.error('Falha ao criar PIX no Mercado Pago:', err);
-                    // Como nenhum PIX válido foi emitido, libera o horário reservado.
+                    // A unicidade (tenantId, dataHora) impede reuso de reservas canceladas.
+                    // Como nenhum código PIX foi entregue ao cliente, remove esta reserva
+                    // e a transação associada por cascade para liberar o horário.
                     try {
-                        await prisma.agendamento.update({
-                            where: { id: resultado.agendamento.id },
-                            data: { status: 'CANCELADO' }
+                        await prisma.agendamento.delete({
+                            where: { id: resultado.agendamento.id }
                         });
                     } catch (cleanupError) {
-                        console.error('Não foi possível liberar a reserva após falha do PIX:', cleanupError);
+                        console.error('Não foi possível remover a reserva após falha do PIX:', cleanupError);
                     }
                     return res.status(502).json({
                         erro: 'Não foi possível gerar o PIX. Tente novamente.'
