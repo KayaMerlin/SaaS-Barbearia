@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -47,7 +47,7 @@ function MenuLinks({ links, pathname, onNavigate }: { links: typeof navegacao; p
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [montado, setMontado] = useState(false);
+  const montado = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [menuAberto, setMenuAberto] = useState(false);
   const [statusAssinatura, setStatusAssinatura] = useState<string | null>(null);
   const [dataVencimento, setDataVencimento] = useState<string | null>(null);
@@ -56,11 +56,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { usuario, setUsuario, logout } = useAuthStore();
 
   useEffect(() => {
-    setMontado(true);
-    try {
-      const u = localStorage.getItem("barbersaas_usuario");
-      setIsAdmin(u ? JSON.parse(u).role === "ADMIN" : false);
-    } catch { setIsAdmin(false); }
+    queueMicrotask(() => {
+      try {
+        const u = localStorage.getItem("barbersaas_usuario");
+        setIsAdmin(u ? JSON.parse(u).role === "ADMIN" : false);
+      } catch { setIsAdmin(false); }
+    });
     const token = localStorage.getItem("barbersaas_token");
     if (!token) { router.replace("/login"); return; }
     if (!usuario) {
@@ -91,12 +92,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [montado, pathname, router]);
 
   useEffect(() => {
-    if (statusAssinatura !== "TRIAL" || !dataVencimento) {
-      setDiasRestantesTrial(0);
-      return;
-    }
-    const restante = Math.ceil((new Date(dataVencimento).getTime() - Date.now()) / 86400000);
-    setDiasRestantesTrial(Math.max(0, restante));
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      if (statusAssinatura !== "TRIAL" || !dataVencimento) {
+        setDiasRestantesTrial(0);
+        return;
+      }
+      const restante = Math.ceil((new Date(dataVencimento).getTime() - Date.now()) / 86400000);
+      setDiasRestantesTrial(Math.max(0, restante));
+    });
+    return () => { active = false; };
   }, [dataVencimento, statusAssinatura]);
   const mostrarBannerTrial = statusAssinatura === "TRIAL" && pathname !== "/dashboard/assinatura" && diasRestantesTrial > 0;
   const nomeExibicao = usuario?.nome ?? "Seu espaço";
