@@ -8,8 +8,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "BarberSaaS | Gestão e Pagamentos",
-  description: "Plataforma completa para barbearias modernas.",
+  title: "BarberSaaS Studio | Agenda e gestão para beleza e barbearias",
+  description: "Organize agendamentos, clientes, serviços e a rotina do seu espaço com uma plataforma simples e intuitiva.",
 };
 
 export default function RootLayout({
@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body
-        className={`${jakarta.variable} font-sans antialiased text-slate-900 bg-slate-50`}
+        className={`${jakarta.variable} font-sans antialiased text-[var(--ink)] bg-[var(--canvas)]`}
       >
         {children}
       </body>
