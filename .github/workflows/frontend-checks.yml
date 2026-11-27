@@ -5,12 +5,10 @@ on:
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-checks.yml"
-  push:
-    branches:
-      - "design/premium-beauty-experience-2026-11-27"
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-checks.yml"
+
+concurrency:
+  group: frontend-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
