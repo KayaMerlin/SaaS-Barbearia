@@ -2,6 +2,7 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import { api } from "@/lib/api";
+import { mensagemErroApi } from "@/lib/mensagem-erro-api";
 
 type Servico = {
   id: string;
@@ -53,8 +54,8 @@ export default function ServicosPage() {
       setPreco("");
       setDuracao("");
       carregarServicos();
-    } catch (error: any) {
-      setErro(error.response?.data?.erro || "Erro ao criar serviço");
+    } catch (error) {
+      setErro(mensagemErroApi(error, "Erro ao criar serviço"));
     } finally {
       setSalvando(false);
     }
@@ -68,12 +69,12 @@ export default function ServicosPage() {
             Serviços
           </h2>
           <p className="text-slate-500 text-sm mt-1">
-            Gerencie os cortes e valores da sua barbearia
+            Organize os serviços, durações e valores do seu espaço
           </p>
         </div>
         <button
           onClick={() => setModalAberto(true)}
-          className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition flex items-center gap-2"
+          className="bg-[#493647] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-[#665061] transition flex items-center gap-2"
         >
           <span className="text-lg">+</span> Novo Serviço
         </button>
@@ -171,8 +172,8 @@ export default function ServicosPage() {
                     required
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    placeholder="Ex: Corte Degradê"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium"
+                    placeholder="Ex: Corte, escova ou limpeza de pele"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#b98191] outline-none transition font-medium"
                   />
                 </div>
 
@@ -188,7 +189,7 @@ export default function ServicosPage() {
                       value={preco}
                       onChange={(e) => setPreco(e.target.value)}
                       placeholder="45.00"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#b98191] outline-none transition font-medium"
                     />
                   </div>
                   <div className="flex-1">
@@ -201,7 +202,7 @@ export default function ServicosPage() {
                       value={duracao}
                       onChange={(e) => setDuracao(e.target.value)}
                       placeholder="40"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-600 outline-none transition font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#b98191] outline-none transition font-medium"
                     />
                   </div>
                 </div>
@@ -218,7 +219,7 @@ export default function ServicosPage() {
                 <button
                   type="submit"
                   disabled={salvando}
-                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition disabled:opacity-70"
+                  className="flex-1 px-4 py-2.5 bg-[#493647] text-white font-bold rounded-xl hover:bg-[#665061] transition disabled:opacity-70"
                 >
                   {salvando ? "Salvando..." : "Salvar Serviço"}
                 </button>
