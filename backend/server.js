@@ -65,7 +65,10 @@ app.get('/', (req, res) => {
 const { runLembreteJob } = require('./src/jobs/lembreteJob');
 app.get('/cron/lembrete', (req, res) => {
   const secret = process.env.CRON_SECRET?.trim();
-  if (secret && req.query.secret !== secret) {
+  if (!secret) {
+    return res.status(503).json({ erro: 'Tarefa não configurada.' });
+  }
+  if (req.headers.authorization !== `Bearer ${secret}`) {
     return res.status(403).json({ erro: 'Forbidden' });
   }
   runLembreteJob()
